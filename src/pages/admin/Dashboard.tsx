@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Users, Image, Award, FileText, Newspaper, BookOpen } from "lucide-react";
+import { Users, Image, Award, Newspaper, BookOpen, Megaphone } from "lucide-react";
 
 const dashboardItems = [
     {
-        path: "/admin/content",
-        label: "Content",
-        icon: FileText,
-        description: "Manage the textual content of your website's pages.",
+        path: "/admin/announcements",
+        label: "Announcements",
+        icon: Megaphone,
+        description: "Create and manage announcements for your website.",
     },
     {
         path: "/admin/blog",
