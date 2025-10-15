@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow public read access for most collections
+    match /{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Restrict access to sensitive collections (e.g., admins)
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+    }
+  }
+}

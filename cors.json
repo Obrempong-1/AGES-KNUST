@@ -1,0 +1,22 @@
+
+[
+  {
+    "origin": [
+      "https://8080-firebase-ages-1760433653569.cluster-fbfjltn375c6wqxlhoehbz44sk.cloudworkstations.dev",
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ],
+    "method": [
+      "GET",
+      "HEAD",
+      "PUT",
+      "POST",
+      "DELETE"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Access-Control-Allow-Origin"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
