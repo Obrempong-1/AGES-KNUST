@@ -13,7 +13,7 @@ export const useAdmin = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Check if the user is an admin by looking up their UID in a special 'admins' collection
+        
         const adminDocRef = doc(db, "admins", user.uid);
         const adminDoc = await getDoc(adminDocRef);
         setIsAdmin(adminDoc.exists());

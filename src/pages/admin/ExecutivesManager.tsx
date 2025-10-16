@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "@/firebase/config";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query } from "firebase/firestore";
@@ -17,7 +18,8 @@ interface Executive {
   phone: string | null;
   email: string | null;
   linkedin_url: string | null;
-  photo_url: string;
+  media_url: string;
+  media_type: 'image' | 'video';
   published: boolean;
   display_order: number;
 }
@@ -26,19 +28,20 @@ export default function ExecutivesManager() {
   const [executives, setExecutives] = useState<Executive[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Omit<Executive, 'id' | 'display_order' | 'photo_url'> & { photo_url?: string }>({
+  const [formData, setFormData] = useState<Omit<Executive, 'id' | 'display_order' | 'media_url' | 'media_type'> & { media_url?: string, media_type?: 'image' | 'video' }>({
     name: "",
     position: "",
     phone: "",
     email: "",
     linkedin_url: "",
     published: true,
-    photo_url: "",
+    media_url: "",
+    media_type: 'image',
   });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'executives' });
+  const { uploading, uploadFile, deleteFile } = useImageUpload({ path: 'executives' });
 
   const executivesCollectionRef = useMemo(() => collection(db, "executives"), []);
 
@@ -75,13 +78,13 @@ export default function ExecutivesManager() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [] },
+    accept: { "image/*": [], "video/*": [] },
     multiple: false,
   });
 
   const resetForm = useCallback(() => {
     setEditingId(null);
-    setFormData({ name: "", position: "", phone: "", email: "", linkedin_url: "", published: true, photo_url: "" });
+    setFormData({ name: "", position: "", phone: "", email: "", linkedin_url: "", published: true, media_url: "", media_type: 'image' });
     if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
@@ -96,23 +99,25 @@ export default function ExecutivesManager() {
         return;
     }
     if (!editingId && !uploadedFile) {
-      toast.error("Please upload an image for the new executive.");
+      toast.error("Please upload a file for the new executive.");
       return;
     }
 
     try {
-      let finalPhotoUrl = formData.photo_url || "";
+      let finalMediaUrl = formData.media_url || "";
+      let finalMediaType = formData.media_type || 'image';
 
       if (uploadedFile) {
-        if (editingId && formData.photo_url) {
-          await deleteImage(formData.photo_url);
+        if (editingId && formData.media_url) {
+          await deleteFile(formData.media_url);
         }
-        const newUrl = await uploadImage(uploadedFile);
+        const newUrl = await uploadFile(uploadedFile);
         if (!newUrl) return;
-        finalPhotoUrl = newUrl;
+        finalMediaUrl = newUrl;
+        finalMediaType = uploadedFile.type.startsWith('image/') ? 'image' : 'video';
       }
 
-      const dataToSave = { ...formData, photo_url: finalPhotoUrl };
+      const dataToSave = { ...formData, media_url: finalMediaUrl, media_type: finalMediaType };
 
       if (editingId) {
         const executiveDoc = doc(db, "executives", editingId);
@@ -129,15 +134,15 @@ export default function ExecutivesManager() {
     } catch (error: any) {
       toast.error(error.message || "Failed to save executive.");
     }
-  }, [formData, editingId, uploadedFile, executives, deleteImage, uploadImage, fetchExecutives, resetForm, executivesCollectionRef]);
+  }, [formData, editingId, uploadedFile, executives, deleteFile, uploadFile, fetchExecutives, resetForm, executivesCollectionRef]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this executive?")) return;
 
     try {
       const executiveToDelete = executives.find(exec => exec.id === id);
-      if (executiveToDelete?.photo_url) {
-        await deleteImage(executiveToDelete.photo_url);
+      if (executiveToDelete?.media_url) {
+        await deleteFile(executiveToDelete.media_url);
       }
 
       await deleteDoc(doc(db, "executives", id));
@@ -146,12 +151,12 @@ export default function ExecutivesManager() {
     } catch (error: any) {
       toast.error(error.message || "Failed to delete executive.");
     }
-  }, [executives, deleteImage]);
+  }, [executives, deleteFile]);
 
   const handleEdit = (exec: Executive) => {
     setEditingId(exec.id);
     setFormData(exec);
-    setPreviewUrl(exec.photo_url);
+    setPreviewUrl(exec.media_url);
     setUploadedFile(null);
     window.scrollTo(0, 0);
   };
@@ -184,15 +189,25 @@ export default function ExecutivesManager() {
           >
             <input {...getInputProps()} />
             {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-48 mx-auto rounded"
-              />
+              uploadedFile?.type.startsWith('image/') ? (
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="max-h-48 mx-auto rounded"
+                />
+              ) : (
+                <video
+                  src={previewUrl}
+                  className="max-h-48 mx-auto rounded"
+                  autoPlay
+                  muted
+                  loop
+                />
+              )
             ) : (
               <div>
                 <Upload className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                <p>Drag & drop photo, or click to select</p>
+                <p>Drag & drop file, or click to select</p>
               </div>
             )}
           </div>
@@ -216,7 +231,11 @@ export default function ExecutivesManager() {
         {executives.map((exec) => (
           <Card key={exec.id} className="p-4">
             <div className="flex flex-wrap items-center gap-4">
-              <img src={exec.photo_url} alt={exec.name} className="w-20 h-20 rounded-full object-cover"/>
+              {exec.media_type === 'image' ? (
+                <img src={exec.media_url} alt={exec.name} className="w-20 h-20 rounded-full object-cover"/>
+              ) : (
+                <video src={exec.media_url} className="w-20 h-20 rounded-full object-cover" autoPlay muted loop />
+              )}
               <div className="flex-1 min-w-[150px]">
                 <h3 className="font-bold">{exec.name}</h3>
                 <p className="text-sm text-muted-foreground">{exec.position}</p>

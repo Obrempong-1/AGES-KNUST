@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { db } from "@/firebase/config";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "firebase/firestore";
@@ -19,7 +20,8 @@ interface BlogPost {
   author: string;
   content: string;
   shortDescription: string;
-  imageUrl: string;
+  mediaUrl: string;
+  mediaType: 'image' | 'video';
   published: boolean;
   createdAt: any;
 }
@@ -30,22 +32,22 @@ const BlogManager = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [currentPost, setCurrentPost] = useState<Partial<BlogPost>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
-  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'blogs' });
+  const { uploading, uploadFile, deleteFile } = useImageUpload({ path: 'blogs' });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
-      setImageFile(file);
+      setMediaFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': [] },
+    accept: { 'image/*': [], 'video/*': [] },
     multiple: false,
   });
 
@@ -71,26 +73,28 @@ const BlogManager = () => {
     }
 
     try {
-      let imageUrl = currentPost.imageUrl;
+      let mediaUrl = currentPost.mediaUrl;
+      let mediaType = currentPost.mediaType;
 
-      if (imageFile) {
-        if (isEditing && currentPost.imageUrl) {
-          await deleteImage(currentPost.imageUrl);
+      if (mediaFile) {
+        if (isEditing && currentPost.mediaUrl) {
+          await deleteFile(currentPost.mediaUrl);
         }
-        const newImageUrl = await uploadImage(imageFile);
-        if (newImageUrl) {
-          imageUrl = newImageUrl;
+        const newMediaUrl = await uploadFile(mediaFile);
+        if (newMediaUrl) {
+          mediaUrl = newMediaUrl;
+          mediaType = mediaFile.type.startsWith('image/') ? 'image' : 'video';
         } else {
           return;
         }
       }
 
-      if (!imageUrl) {
-        toast.error("Image upload failed or no image was provided.");
+      if (!mediaUrl) {
+        toast.error("Media upload failed or no media was provided.");
         return;
       }
 
-      const { id, ...postData } = { ...currentPost, imageUrl, published: currentPost.published ?? false };
+      const { id, ...postData } = { ...currentPost, mediaUrl, mediaType, published: currentPost.published ?? false };
 
       if (isEditing && currentPost.id) {
         const postDoc = doc(db, "blogs", currentPost.id);
@@ -111,14 +115,14 @@ const BlogManager = () => {
   const handleEdit = (post: BlogPost) => {
     setCurrentPost(post);
     setIsEditing(true);
-    setImageFile(null);
-    setPreviewUrl(post.imageUrl);
+    setMediaFile(null);
+    setPreviewUrl(post.mediaUrl);
   };
 
   const handleDelete = async (post: BlogPost) => {
     try {
-        if (post.imageUrl) {
-            await deleteImage(post.imageUrl);
+        if (post.mediaUrl) {
+            await deleteFile(post.mediaUrl);
         }
       const postDoc = doc(db, "blogs", post.id);
       await deleteDoc(postDoc);
@@ -145,7 +149,7 @@ const BlogManager = () => {
   const resetForm = () => {
     setCurrentPost({});
     setIsEditing(false);
-    setImageFile(null);
+    setMediaFile(null);
     if(previewUrl) {
         URL.revokeObjectURL(previewUrl);
     }
@@ -178,9 +182,13 @@ const BlogManager = () => {
           <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary">
             <input {...getInputProps()} />
             {previewUrl ? (
-              <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto" />
+              mediaFile?.type.startsWith('image/') ? (
+                <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto" />
+              ) : (
+                <video src={previewUrl} className="max-h-48 mx-auto" autoPlay muted loop />
+              )
             ) : (
-              <p>{isDragActive ? "Drop the image here..." : "Drag 'n' drop an image here, or click to select one"}</p>
+              <p>{isDragActive ? "Drop the file here..." : "Drag 'n' drop a file here, or click to select one"}</p>
             )}
           </div>
 
@@ -208,7 +216,11 @@ const BlogManager = () => {
             {posts.map((post) => (
               <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-4">
-                  <img src={post.imageUrl} alt={post.title} className="w-24 h-24 object-cover rounded"/>
+                  {post.mediaType === 'image' ? (
+                    <img src={post.mediaUrl} alt={post.title} className="w-24 h-24 object-cover rounded"/>
+                  ) : (
+                    <video src={post.mediaUrl} className="w-24 h-24 object-cover rounded" controls />
+                  )}
                   <div>
                     <h3 className="font-bold">{post.title}</h3>
                     <p className="text-sm text-muted-foreground">By {post.author} on {new Date(post.createdAt?.toDate()).toLocaleDateString()}</p>
