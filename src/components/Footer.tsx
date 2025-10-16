@@ -77,8 +77,8 @@ const Footer = () => {
           <p className="text-muted-foreground text-sm">
             &copy; {new Date().getFullYear()} Association of Geomatic Engineering Students. All rights reserved.
           </p>
-          <p className="text-muted-foreground text-xs mt-2">
-            Designed by Obrempong Kwabena Osei-Wusu
+          <p className="text-muted-foreground text-sm mt-2">
+            Developed by Obrempong Kwabena Osei-Wusu
             </p>
         </div>
       </div>
