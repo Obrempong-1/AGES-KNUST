@@ -1,6 +1,8 @@
 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
+import { ArrowRight } from "lucide-react";
 
 interface NewsCardProps {
   title: string;
@@ -30,6 +32,12 @@ const NewsCard = ({ item }: { item: NewsCardProps }) => {
           <p className="text-sm text-gray-500 mb-2">{new Date(item.date).toLocaleDateString()}</p>
           <h3 className="text-xl font-bold mb-2 h-14 overflow-hidden">{item.title}</h3>
           <p className="text-gray-600 h-24 overflow-hidden">{item.description}</p>
+          <div className="mt-4 flex justify-end">
+            <Button variant="link" className="p-0 h-auto text-primary">
+              Learn More
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </Link>
     </motion.div>

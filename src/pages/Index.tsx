@@ -20,6 +20,7 @@ import heroSlide3 from "@/assets/hero-slide-3.jpg";
 import heroSlide4 from "@/assets/hero-slide-4.jpg";
 import survey from "@/assets/survey.jpg";
 import BlogCard from "@/components/BlogCard";
+import NewsCard from "@/components/NewsCard";
 import {
   collection,
   query,
@@ -40,6 +41,7 @@ const Index = () => {
   const isMobile = useIsMobile();
 
   const [blogPosts, setBlogPosts] = useState([]);
+  const [newsEvents, setNewsEvents] = useState([]);
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -66,7 +68,31 @@ const Index = () => {
       setBlogPosts(blogData);
     };
 
+    const fetchNewsEvents = async () => {
+        const itemsCollectionRef = collection(db, "news_events");
+        const q = query(
+          itemsCollectionRef,
+          where("published", "==", true),
+          orderBy("createdAt", "desc"),
+          limit(3)
+        );
+        const querySnapshot = await getDocs(q);
+        const newsData = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            date: data.createdAt.toDate().toISOString(),
+            image: data.imageUrl,
+            description: data.shortDescription,
+            link: `/news-events#${doc.id}`,
+          };
+        });
+        setNewsEvents(newsData);
+      };
+
     fetchBlogs();
+    fetchNewsEvents();
   }, []);
 
   const heroSlides = [
@@ -198,8 +224,8 @@ const Index = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-10" />
-        <CarouselNext className="hidden md:flex absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselPrevious className="hidden md:flex absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white" />
+        <CarouselNext className="hidden md:flex absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white" />
       </Carousel>
 
       <Announcements />
@@ -301,6 +327,35 @@ const Index = () => {
           </Link>
         </div>
       </section>
+
+      {newsEvents.length > 0 && (
+        <section className="py-20 bg-background relative overflow-hidden">
+          <div className="container mx-auto px-4">
+            <AnimatedHeading>Latest News & Events</AnimatedHeading>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mt-4">
+              Stay up-to-date with the latest happenings in the association.
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+              {newsEvents.map((item, index) => (
+                <ScrollZoom key={index} delay={index * 100}>
+                  <NewsCard item={item} />
+                </ScrollZoom>
+              ))}
+            </div>
+            <div className="text-center mt-12">
+              <Link to="/news-events">
+                <Button
+                  size="lg"
+                  className="group bg-gradient-to-r from-primary to-secondary hover:shadow-xl transition-all duration-300"
+                >
+                  View All News & Events
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
       
       <section
         className="py-20 bg-background relative overflow-hidden"
