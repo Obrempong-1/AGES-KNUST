@@ -34,11 +34,7 @@ import Announcements from "@/components/Announcements";
 import AnimatedHeading from "@/components/AnimatedHeading";
 import ScrollZoom from "@/components/ScrollZoom";
 
-interface IndexProps {
-  requestNotificationPermission: () => void;
-}
-
-const Index = ({ requestNotificationPermission }: IndexProps) => {
+const Index = () => {
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
 
   const [blogPosts, setBlogPosts] = useState([]);
@@ -153,7 +149,7 @@ const Index = ({ requestNotificationPermission }: IndexProps) => {
                 }}
               >
                 <div className="container mx-auto px-4 text-center relative z-10">
-                  <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
+                  <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
                     {slide.title}
                   </h1>
                   <p
@@ -298,23 +294,6 @@ const Index = ({ requestNotificationPermission }: IndexProps) => {
         </div>
       </section>
       
-      <section className="py-20 bg-muted/30 text-center">
-        <div className="container mx-auto px-4">
-          <AnimatedHeading>Stay Updated with AGES</AnimatedHeading>
-          <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
-            Enable push notifications to receive the latest news, announcements, and updates directly on your device. Never miss an important update from the Association of Geomatic Engineering Students.
-          </p>
-          <Button
-            size="lg"
-            className="group bg-gradient-to-r from-primary to-secondary hover:shadow-xl transition-all duration-300"
-            onClick={requestNotificationPermission}
-          >
-            Enable Notifications
-            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </div>
-      </section>
-
       <section
         className="py-20 bg-background relative overflow-hidden"
       >

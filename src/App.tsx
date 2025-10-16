@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PageSkeleton from "./components/loaders/PageSkeleton";
 import SplashAnimation from "./components/SplashAnimation";
-import { useNotifications } from "./hooks/useNotifications";
+import NotificationPrompt from "./components/NotificationPrompt";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +41,6 @@ const PositionsManager = lazy(() => import("./pages/admin/PositionsManager"));
 
 const App = () => {
   const [isSplashActive, setSplashActive] = useState(true);
-  const { requestNotificationPermission } = useNotifications();
 
   useEffect(() => {
     const splashShown = sessionStorage.getItem("splashShown");
@@ -64,17 +63,14 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <NotificationPrompt />
         {isSplashActive && <SplashAnimation />}
         <BrowserRouter>
           <Suspense fallback={<PageSkeleton />}>
             <Routes>
               <Route
                 path="/"
-                element={
-                  <Index
-                    requestNotificationPermission={requestNotificationPermission}
-                  />
-                }
+                element={<Index />}
               />
               <Route path="/about" element={<About />} />
               <Route path="/executives" element={<Executives />} />
