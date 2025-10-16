@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, BookOpen, Users, Trophy, Calendar } from "lucide-react";
+import { ArrowRight, BookOpen, Users, Trophy, Calendar, Hand } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Carousel,
@@ -20,7 +20,6 @@ import heroSlide3 from "@/assets/hero-slide-3.jpg";
 import heroSlide4 from "@/assets/hero-slide-4.jpg";
 import survey from "@/assets/survey.jpg";
 import BlogCard from "@/components/BlogCard";
-import NewsCard from "@/components/NewsCard";
 import {
   collection,
   query,
@@ -33,12 +32,14 @@ import { db } from "@/firebase/config";
 import Announcements from "@/components/Announcements";
 import AnimatedHeading from "@/components/AnimatedHeading";
 import ScrollZoom from "@/components/ScrollZoom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { motion } from "framer-motion";
 
 const Index = () => {
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
+  const isMobile = useIsMobile();
 
   const [blogPosts, setBlogPosts] = useState([]);
-  const [newsItems, setNewsItems] = useState([]);
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -65,31 +66,7 @@ const Index = () => {
       setBlogPosts(blogData);
     };
 
-    const fetchNews = async () => {
-      const itemsCollectionRef = collection(db, "news_events");
-      const q = query(
-        itemsCollectionRef,
-        where("published", "==", true),
-        orderBy("createdAt", "desc"),
-        limit(3)
-      );
-      const querySnapshot = await getDocs(q);
-      const newsData = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          date: data.createdAt.toDate().toISOString(),
-          image: data.imageUrl,
-          description: data.content,
-          link: `/news-event/${doc.id}`,
-        };
-      });
-      setNewsItems(newsData);
-    };
-
     fetchBlogs();
-    fetchNews();
   }, []);
 
   const heroSlides = [
@@ -148,7 +125,7 @@ const Index = () => {
                   backgroundPosition: "center",
                 }}
               >
-                <div className="container mx-auto px-4 text-center relative z-10">
+                <div className="container mx-auto px-4 text-center relative z-10 pt-20">
                   <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
                     {slide.title}
                   </h1>
@@ -184,14 +161,45 @@ const Index = () => {
                     Discover how AGES shapes future leaders in geomatic
                     engineering
                   </p>
+                  {isMobile && (
+                    <motion.div
+                      className="mt-6 flex flex-col items-center gap-1 text-white/80"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 1, 1, 0] }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        repeatDelay: 2,
+                        ease: "easeInOut",
+                        times: [0, 0.2, 0.8, 1],
+                      }}
+                    >
+                      <motion.div
+                        animate={{
+                          x: [-10, 10, -10],
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          repeatType: "loop",
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <Hand className="h-5 w-5 fill-white/50" />
+                      </motion.div>
+                      <span className="text-xs font-semibold tracking-widest">
+                        SWIPE
+                      </span>
+                    </motion.div>
+                  )}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent"></div>
               </section>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-10" />
-        <CarouselNext className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselPrevious className="hidden md:flex absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselNext className="hidden md:flex absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10" />
       </Carousel>
 
       <Announcements />
@@ -356,28 +364,6 @@ const Index = () => {
               </Card>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-background relative overflow-hidden">
-        <div className="container mx-auto px-4 animate-glassmorphism-blur-in">
-          <AnimatedHeading>Latest News & Events</AnimatedHeading>
-          <p
-              className={`text-lg text-muted-foreground max-w-2xl mx-auto mt-4 transition-all duration-1000 delay-300`}
-            >
-              Stay updated with the latest happenings in our department
-            </p>
-            <div className="grid md:grid-cols-3 gap-8">
-              {newsItems.length > 0 ? (
-                newsItems.map((item, index) => (
-                  <ScrollZoom key={index} delay={index * 100}>
-                    <NewsCard item={item} />
-                  </ScrollZoom>
-                ))
-              ) : (
-                <p>No news or events at the moment. Please check back later.</p>
-              )}
-            </div>
         </div>
       </section>
 
