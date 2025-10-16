@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { db } from "@/firebase/config";
@@ -17,13 +17,14 @@ interface Personality {
   week_end: string;
 }
 
+const personalityCollectionRef = collection(db, "personality_of_week");
+
 const PersonalityOfWeek = () => {
   const [personality, setPersonality] = useState<Personality | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const personalityCollectionRef = collection(db, "personality_of_week");
-
-  const fetchCurrentPersonality = async () => {
+  const fetchCurrentPersonality = useCallback(async () => {
+    setLoading(true);
     try {
       const q = query(personalityCollectionRef, where("is_active", "==", true));
       const querySnapshot = await getDocs(q);
@@ -37,11 +38,11 @@ const PersonalityOfWeek = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCurrentPersonality();
-  }, []);
+  }, [fetchCurrentPersonality]);
 
   if (loading) {
     return (

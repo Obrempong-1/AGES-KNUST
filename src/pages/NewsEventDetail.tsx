@@ -15,7 +15,7 @@ interface NewsEvent {
   content: string;
   imageUrl: string;
   published: boolean;
-  createdAt: any; // Firestore timestamp
+  createdAt: any; 
 }
 
 const NewsEventDetail = () => {

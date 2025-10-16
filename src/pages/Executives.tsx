@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { Trash2, Upload, Mail, Linkedin, Phone } from "lucide-react";
-import { useImageUpload } from "@/hooks/useImageUpload"; // Import the hook
+import { useImageUpload } from "@/hooks/useImageUpload"; 
 
 interface Executive {
   id: string;
@@ -98,7 +98,7 @@ export default function ExecutivesManager() {
           await deleteImage(formData.photo_url);
         }
         const newUrl = await uploadImage(uploadedFile);
-        if (!newUrl) return; // Upload failed, stop submission.
+        if (!newUrl) return; 
         finalPhotoUrl = newUrl;
       }
 

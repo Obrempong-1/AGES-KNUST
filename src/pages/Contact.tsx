@@ -87,7 +87,6 @@ const Contact = () => {
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12">
-              {/* Contact Form */}
               <Card className="p-8 animate-fade-in">
                 <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" dangerouslySetInnerHTML={{ __html: content.form_title || "Send us a Message" }} />
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -156,7 +155,7 @@ const Contact = () => {
                 </form>
               </Card>
 
-              {/* Contact Information */}
+              
               <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 <h2 className="text-3xl font-bold mb-6" dangerouslySetInnerHTML={{ __html: content.contact_info_title || "Contact Information" }} />
                 <div dangerouslySetInnerHTML={{ __html: content.contact_info_subtitle || "<p>You can also reach out to us through the following channels:</p>" }} />
@@ -180,7 +179,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Phone</h3>
-                      {/* <p className="text-muted-foreground">{content.contact_phone || "(233) 55-"}</p> */}
+                      
                     </div>
                   </div>
                 </Card>

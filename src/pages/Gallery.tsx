@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { db } from "@/firebase/config";
@@ -15,14 +15,15 @@ interface GalleryImage {
   created_at: string;
 }
 
+const galleryCollectionRef = collection(db, "gallery");
+
 const Gallery = () => {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
-  const galleryCollectionRef = collection(db, "gallery");
-
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
+    setLoading(true);
     try {
       const q = query(galleryCollectionRef, orderBy("created_at", "desc"));
       const querySnapshot = await getDocs(q);
@@ -37,11 +38,11 @@ const Gallery = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchImages();
-  }, []);
+  }, [fetchImages]);
 
   return (
     <div className="min-h-screen flex flex-col">

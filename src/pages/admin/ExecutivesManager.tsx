@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "@/firebase/config";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { Trash2, Upload, Mail, Linkedin, Phone } from "lucide-react";
-import { useImageUpload } from "@/hooks/useImageUpload"; // Import the hook
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface Executive {
   id: string;
@@ -39,7 +39,8 @@ export default function ExecutivesManager() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'executives' });
-  const executivesCollectionRef = collection(db, "executives");
+
+  const executivesCollectionRef = useMemo(() => collection(db, "executives"), []);
 
   const fetchExecutives = useCallback(async () => {
     setLoading(true);
@@ -57,7 +58,7 @@ export default function ExecutivesManager() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [executivesCollectionRef]);
 
   useEffect(() => {
     fetchExecutives();
@@ -78,7 +79,17 @@ export default function ExecutivesManager() {
     multiple: false,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const resetForm = useCallback(() => {
+    setEditingId(null);
+    setFormData({ name: "", position: "", phone: "", email: "", linkedin_url: "", published: true, photo_url: "" });
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setUploadedFile(null);
+    setPreviewUrl(null);
+  }, [previewUrl]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.position) {
         toast.error("Name and Position are required.");
@@ -97,7 +108,7 @@ export default function ExecutivesManager() {
           await deleteImage(formData.photo_url);
         }
         const newUrl = await uploadImage(uploadedFile);
-        if (!newUrl) return; // Upload failed, stop submission.
+        if (!newUrl) return;
         finalPhotoUrl = newUrl;
       }
 
@@ -118,9 +129,9 @@ export default function ExecutivesManager() {
     } catch (error: any) {
       toast.error(error.message || "Failed to save executive.");
     }
-  };
+  }, [formData, editingId, uploadedFile, executives, deleteImage, uploadImage, fetchExecutives, resetForm, executivesCollectionRef]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this executive?")) return;
 
     try {
@@ -135,7 +146,7 @@ export default function ExecutivesManager() {
     } catch (error: any) {
       toast.error(error.message || "Failed to delete executive.");
     }
-  };
+  }, [executives, deleteImage]);
 
   const handleEdit = (exec: Executive) => {
     setEditingId(exec.id);
@@ -145,17 +156,7 @@ export default function ExecutivesManager() {
     window.scrollTo(0, 0);
   };
 
-  const resetForm = () => {
-    setEditingId(null);
-    setFormData({ name: "", position: "", phone: "", email: "", linkedin_url: "", published: true, photo_url: "" });
-    if (previewUrl && previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setUploadedFile(null);
-    setPreviewUrl(null);
-  };
-
-  const togglePublished = async (id: string, currentStatus: boolean) => {
+  const togglePublished = useCallback(async (id: string, currentStatus: boolean) => {
     try {
       const executiveDoc = doc(db, "executives", id);
       await updateDoc(executiveDoc, { published: !currentStatus });
@@ -164,7 +165,7 @@ export default function ExecutivesManager() {
     } catch (error: any) {
       toast.error(error.message);
     }
-  };
+  }, []);
 
   return (
     <div>
