@@ -4,6 +4,7 @@ import { db } from '@/firebase/config';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import AnimatedHeading from './AnimatedHeading';
 
 interface Announcement {
   id: string;
@@ -83,6 +84,7 @@ const Announcements = () => {
 
   return (
     <div className="relative w-full max-w-4xl mx-auto my-12" aria-live="polite">
+        <AnimatedHeading>Announcements</AnimatedHeading>
         <AnimatePresence initial={false} custom={direction} mode="wait">
             <motion.div
                 key={currentIndex}

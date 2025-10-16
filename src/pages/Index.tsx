@@ -1,3 +1,4 @@
+
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,15 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import Announcements from "@/components/Announcements";
+import AnimatedHeading from "@/components/AnimatedHeading";
+import ScrollZoom from "@/components/ScrollZoom";
 
-const Index = () => {
+interface IndexProps {
+  requestNotificationPermission: () => void;
+}
+
+const Index = ({ requestNotificationPermission }: IndexProps) => {
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
-  const whatWeDoRef = useRef<HTMLDivElement>(null);
-  const blogsRef = useRef<HTMLDivElement>(null);
-  const newsRef = useRef<HTMLDivElement>(null);
 
   const [blogPosts, setBlogPosts] = useState([]);
   const [newsItems, setNewsItems] = useState([]);
@@ -190,13 +194,13 @@ const Index = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselPrevious className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselNext className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10" />
       </Carousel>
 
       <Announcements />
 
-      <section ref={whatWeDoRef} className="py-20 bg-muted/30">
+      <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div
@@ -229,9 +233,7 @@ const Index = () => {
             <div
               className={`space-y-6 transition-all duration-1000 delay-300`}
             >
-              <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                What We Do
-              </h2>
+             <AnimatedHeading>What We Do</AnimatedHeading>
 
               <div className="space-y-4">
                 <div
@@ -295,9 +297,25 @@ const Index = () => {
           </Link>
         </div>
       </section>
+      
+      <section className="py-20 bg-muted/30 text-center">
+        <div className="container mx-auto px-4">
+          <AnimatedHeading>Stay Updated with AGES</AnimatedHeading>
+          <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
+            Enable push notifications to receive the latest news, announcements, and updates directly on your device. Never miss an important update from the Association of Geomatic Engineering Students.
+          </p>
+          <Button
+            size="lg"
+            className="group bg-gradient-to-r from-primary to-secondary hover:shadow-xl transition-all duration-300"
+            onClick={requestNotificationPermission}
+          >
+            Enable Notifications
+            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
+      </section>
 
       <section
-        ref={blogsRef}
         className="py-20 bg-background relative overflow-hidden"
       >
         <div className="absolute inset-0 -z-10">
@@ -310,30 +328,21 @@ const Index = () => {
         </div>
 
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2
-              className={`text-5xl md:text-6xl font-bold mb-4 transition-all duration-1000`}
-            >
-              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
-                Latest Blogs
-              </span>
-            </h2>
-            <div
-              className={`h-1 w-32 mx-auto bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-1000 delay-200`}
-            ></div>
-            <p
+        <AnimatedHeading>Latest Blogs</AnimatedHeading>
+          <p
               className={`text-lg text-muted-foreground max-w-2xl mx-auto mt-4 transition-all duration-1000 delay-300`}
             >
               Insights, tutorials, and stories from the world of geomatic
               engineering
             </p>
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {blogPosts.map((blog, index) => (
-              <BlogCard key={index} post={blog} />
-            ))}
-          </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {blogPosts.map((blog, index) => (
+                <ScrollZoom key={index} delay={index * 100}>
+                  <BlogCard post={blog} />
+                </ScrollZoom>
+              ))}
+            </div>
 
           <div
             className={`text-center mt-12 transition-all duration-1000 delay-700`}
@@ -371,34 +380,25 @@ const Index = () => {
         </div>
       </section>
 
-      <section ref={newsRef} className="py-20 bg-background relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2
-              className={`text-5xl md:text-6xl font-bold mb-4 transition-all duration-1000`}
-            >
-              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
-                Latest News & Events
-              </span>
-            </h2>
-            <div
-              className={`h-1 w-32 mx-auto bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-1000 delay-200`}
-            ></div>
-            <p
+      <section className="py-20 bg-background relative overflow-hidden">
+        <div className="container mx-auto px-4 animate-glassmorphism-blur-in">
+          <AnimatedHeading>Latest News & Events</AnimatedHeading>
+          <p
               className={`text-lg text-muted-foreground max-w-2xl mx-auto mt-4 transition-all duration-1000 delay-300`}
             >
               Stay updated with the latest happenings in our department
             </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {newsItems.length > 0 ? (
-              newsItems.map((item, index) => (
-                <NewsCard key={index} item={item} />
-              ))
-            ) : (
-              <p>No news or events at the moment. Please check back later.</p>
-            )}
-          </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {newsItems.length > 0 ? (
+                newsItems.map((item, index) => (
+                  <ScrollZoom key={index} delay={index * 100}>
+                    <NewsCard item={item} />
+                  </ScrollZoom>
+                ))
+              ) : (
+                <p>No news or events at the moment. Please check back later.</p>
+              )}
+            </div>
         </div>
       </section>
 
