@@ -79,9 +79,7 @@ const BlogDetail = () => {
             </CardHeader>
             <CardContent>
               <img src={post.imageUrl} alt={post.title} className="w-full rounded-lg mb-8" />
-              <div className="prose dark:prose-invert max-w-none">
-                <p>{post.content}</p>
-              </div>
+              <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
             </CardContent>
           </Card>
         </div>
