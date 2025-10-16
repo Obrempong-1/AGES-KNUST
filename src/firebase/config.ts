@@ -1,14 +1,17 @@
-
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
-import { getStorage } from "firebase/storage"; 
+import { getStorage } from "firebase/storage"; // Import getStorage
 import { getMessaging } from "firebase/messaging";
 
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-
-const firebaseConfig = {
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+export const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -17,14 +20,14 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
   };
 
-
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-
+// Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 const auth = getAuth(app);
 const functions = getFunctions(app);
-const storage = getStorage(app); 
+const storage = getStorage(app); // Initialize Storage
 const messaging = getMessaging(app);
 
-export { db, auth, functions, storage, messaging }; 
+export { db, auth, functions, storage, messaging }; // Export storage
