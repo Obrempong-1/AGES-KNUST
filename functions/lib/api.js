@@ -40,11 +40,23 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const mail_1 = __importDefault(require("@sendgrid/mail"));
 admin.initializeApp();
+const db = admin.firestore();
+const messaging = admin.messaging();
 const bucket = admin.storage().bucket("piwc-asokwa-site.firebasestorage.app");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: true }));
 app.use(express_1.default.json());
+// Set SendGrid API Key
+const sendgridApiKey = functions.config().sendgrid?.key;
+if (sendgridApiKey) {
+    mail_1.default.setApiKey(sendgridApiKey);
+    console.log("SendGrid API key set.");
+}
+else {
+    console.error("SendGrid API key is missing. Ensure functions:config:set sendgrid.key is set.");
+}
 /**
  * Generates a signed V4 URL for uploading a file directly to Firebase Storage.
  */
@@ -101,33 +113,89 @@ app.post("/delete-image", async (req, res) => {
         return res.status(500).json({ message: "Image could not be deleted." });
     }
 });
-// --- Other Endpoints (Unchanged) ---
 app.post("/send-email", async (req, res) => {
-    const { name, email, phone, message } = req.body;
-    if (!name || !email || !message) {
-        return res.status(400).json({ error: "Missing required fields: name, email, message" });
+    if (!sendgridApiKey) {
+        console.error("Email service not configured. SendGrid API key is missing.");
+        return res.status(500).json({ error: "Email service is not configured on the server." });
     }
+    const { name, email, phone, message, subject } = req.body;
+    if (!name || !email || !message || !subject) {
+        return res.status(400).json({ error: "Missing required fields: name, email, message, subject" });
+    }
+    // IMPORTANT: This email must be a verified sender in your SendGrid account.
+    const verifiedSender = "obrempong.kow@gmail.com";
+    const msg = {
+        to: verifiedSender, // The email address that will receive the message
+        from: {
+            name: "Contact Form - PIWC Asokwa",
+            email: verifiedSender, // This must be a verified sender
+        },
+        replyTo: {
+            name: name,
+            email: email
+        },
+        subject: `New Contact Form Submission: ${subject}`,
+        html: `
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message}</p>
+        `
+    };
     try {
-        await admin.firestore().collection("mail").add({
-            to: "info@agesknust.com",
-            replyTo: email,
-            message: {
-                subject: `New Contact Form Submission from ${name}`,
-                html: `
-                    <p><strong>Name:</strong> ${name}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-                    <p><strong>Message:</strong></p>
-                    <p>${message}</p>
-                `,
-            },
-        });
-        return res.status(200).json({ message: "Email queued for sending successfully" });
+        await mail_1.default.send(msg);
+        return res.status(200).json({ message: "Email sent successfully" });
     }
     catch (error) {
-        console.error("Error queueing email:", error);
-        return res.status(500).json({ error: "Failed to queue email for sending" });
+        console.error("Error sending email with SendGrid:", error);
+        if (error.response) {
+            console.error(error.response.body);
+        }
+        return res.status(500).json({ error: "Failed to send email." });
     }
 });
 exports.api = functions.runWith({ memory: "256MB" }).https.onRequest(app);
+exports.sendNotificationOnNewAnnouncement = functions.firestore
+    .document("announcements/{announcementId}")
+    .onCreate(async (snapshot) => {
+    const announcement = snapshot.data();
+    const payload = {
+        notification: {
+            title: "New Announcement!",
+            body: announcement.title,
+        },
+        webpush: {
+            fcm_options: {
+                link: "/",
+            },
+        },
+    };
+    const tokensCollection = await db.collection("fcm_tokens").get();
+    const tokens = tokensCollection.docs.map((doc) => doc.data().token);
+    if (tokens.length > 0) {
+        await messaging.sendToDevice(tokens, payload);
+    }
+});
+exports.sendNotificationOnNewNewsEvent = functions.firestore
+    .document("newsEvents/{newsEventId}")
+    .onCreate(async (snapshot) => {
+    const newsEvent = snapshot.data();
+    const payload = {
+        notification: {
+            title: "New News/Event!",
+            body: newsEvent.title,
+        },
+        webpush: {
+            fcm_options: {
+                link: `/news-event/${snapshot.id}`,
+            },
+        },
+    };
+    const tokensCollection = await db.collection("fcm_tokens").get();
+    const tokens = tokensCollection.docs.map((doc) => doc.data().token);
+    if (tokens.length > 0) {
+        await messaging.sendToDevice(tokens, payload);
+    }
+});
 //# sourceMappingURL=api.js.map

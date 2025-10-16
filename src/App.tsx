@@ -6,10 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PageSkeleton from "./components/loaders/PageSkeleton";
 import SplashAnimation from "./components/SplashAnimation";
+import { useNotifications } from "./hooks/useNotifications";
 
 const queryClient = new QueryClient();
 
-// Lazy load all the pages
+
 const Index = lazy(() => import("./pages/Index"));
 const About = lazy(() => import("./pages/About"));
 const Executives = lazy(() => import("./pages/Executives"));
@@ -35,6 +36,7 @@ const PositionsManager = lazy(() => import("./pages/admin/PositionsManager"));
 
 const App = () => {
   const [isSplashActive, setSplashActive] = useState(true);
+  useNotifications();
 
   useEffect(() => {
     const splashShown = sessionStorage.getItem("splashShown");

@@ -2,37 +2,25 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import express from "express";
 import cors from "cors";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 
 admin.initializeApp();
+const db = admin.firestore();
+const messaging = admin.messaging();
 const bucket = admin.storage().bucket("piwc-asokwa-site.firebasestorage.app");
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-let transporter: nodemailer.Transporter | undefined;
-
-try {
-    const gmailEmail = functions.config().gmail?.email;
-    const gmailPassword = functions.config().gmail?.password;
-
-    if (gmailEmail && gmailPassword) {
-        transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: gmailEmail,
-                pass: gmailPassword
-            }
-        });
-        console.log("Nodemailer transporter created successfully.");
-    } else {
-        console.error("Gmail configuration is missing. Ensure functions:config:set gmail.email and gmail.password are set.");
-    }
-} catch (error) {
-    console.error("Error creating Nodemailer transporter:", error);
+// Set SendGrid API Key
+const sendgridApiKey = functions.config().sendgrid?.key;
+if (sendgridApiKey) {
+    sgMail.setApiKey(sendgridApiKey);
+    console.log("SendGrid API key set.");
+} else {
+    console.error("SendGrid API key is missing. Ensure functions:config:set sendgrid.key is set.");
 }
-
 
 /**
  * Generates a signed V4 URL for uploading a file directly to Firebase Storage.
@@ -99,8 +87,8 @@ app.post("/delete-image", async (req, res) => {
 });
 
 app.post("/send-email", async (req, res) => {
-    if (!transporter) {
-        console.error("Email transporter not initialized. Check configuration and function logs.");
+    if (!sendgridApiKey) {
+        console.error("Email service not configured. SendGrid API key is missing.");
         return res.status(500).json({ error: "Email service is not configured on the server." });
     }
 
@@ -110,9 +98,19 @@ app.post("/send-email", async (req, res) => {
         return res.status(400).json({ error: "Missing required fields: name, email, message, subject" });
     }
 
-    const mailOptions = {
-        from: `"${name}" <${email}>`,
-        to: "obrempong.kow@gmail.com",
+    // IMPORTANT: This email must be a verified sender in your SendGrid account.
+    const verifiedSender = "obrempong.kow@gmail.com"; 
+
+    const msg = {
+        to: verifiedSender, // The email address that will receive the message
+        from: {
+            name: "Contact Form - PIWC Asokwa",
+            email: verifiedSender, // This must be a verified sender
+        },
+        replyTo: {
+            name: name,
+            email: email
+        },
         subject: `New Contact Form Submission: ${subject}`,
         html: `
             <p><strong>Name:</strong> ${name}</p>
@@ -124,12 +122,65 @@ app.post("/send-email", async (req, res) => {
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        await sgMail.send(msg);
         return res.status(200).json({ message: "Email sent successfully" });
-    } catch (error) {
-        console.error("Error sending email:", error);
-        return res.status(500).json({ error: "Failed to send email" });
+    } catch (error: any) {
+        console.error("Error sending email with SendGrid:", error);
+        if (error.response) {
+            console.error(error.response.body);
+        }
+        return res.status(500).json({ error: "Failed to send email." });
     }
 });
 
 exports.api = functions.runWith({ memory: "256MB" }).https.onRequest(app);
+
+exports.sendNotificationOnNewAnnouncement = functions.firestore
+  .document("announcements/{announcementId}")
+  .onCreate(async (snapshot) => {
+    const announcement = snapshot.data();
+
+    const payload = {
+      notification: {
+        title: "New Announcement!",
+        body: announcement.title,
+      },
+      webpush: {
+        fcm_options: {
+          link: "/",
+        },
+      },
+    };
+
+    const tokensCollection = await db.collection("fcm_tokens").get();
+    const tokens = tokensCollection.docs.map((doc) => doc.data().token);
+
+    if (tokens.length > 0) {
+      await messaging.sendToDevice(tokens, payload);
+    }
+  });
+
+exports.sendNotificationOnNewNewsEvent = functions.firestore
+  .document("newsEvents/{newsEventId}")
+  .onCreate(async (snapshot) => {
+    const newsEvent = snapshot.data();
+
+    const payload = {
+      notification: {
+        title: "New News/Event!",
+        body: newsEvent.title,
+      },
+      webpush: {
+        fcm_options: {
+          link: `/news-event/${snapshot.id}`,
+        },
+      },
+    };
+
+    const tokensCollection = await db.collection("fcm_tokens").get();
+    const tokens = tokensCollection.docs.map((doc) => doc.data().token);
+
+    if (tokens.length > 0) {
+      await messaging.sendToDevice(tokens, payload);
+    }
+  });
