@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { db } from "@/firebase/config";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
@@ -16,7 +17,7 @@ interface NewsEvent {
   content: string;
   imageUrl: string;
   published: boolean;
-  createdAt: any; 
+  createdAt: any; // Firestore timestamp
   registrationLink?: string;
 }
 
@@ -77,9 +78,9 @@ const NewsEvents = () => {
             {error && <p className="text-red-500">{error}</p>}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {items.map((item, index) => (
+                <Link to={`/news-event/${item.id}`} key={item.id}>
                 <Card 
-                  key={item.id} 
-                  className="overflow-hidden group hover:shadow-2xl transition-all duration-300 animate-fade-in"
+                  className="overflow-hidden group hover:shadow-2xl transition-all duration-300 animate-fade-in h-full flex flex-col"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="relative overflow-hidden aspect-video">
@@ -95,36 +96,30 @@ const NewsEvents = () => {
                     </div>
                   </div>
                   
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
                       {item.title}
                     </h3>
                     
-                    <p className="text-muted-foreground mb-4 line-clamp-3">
+                    <p className="text-muted-foreground mb-4 line-clamp-3 flex-grow">
                       {item.content}
                     </p>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
                         <span>{new Date(item.createdAt?.toDate()).toLocaleDateString()}</span>
                       </div>
                       
-                      {item.category === 'event' && item.registrationLink ? (
-                        <a href={item.registrationLink} target="_blank" rel="noopener noreferrer">
-                          <Button>Register</Button>
-                        </a>
-                      ) : (
-                        <Link
-                          to={`/news-event/${item.id}`}
-                          className="text-primary hover:underline font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all"
-                        >
-                          Read More <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      )}
+                      <div
+                        className="text-primary hover:underline font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all"
+                      >
+                        Read More <ArrowRight className="h-4 w-4" />
+                      </div>
                     </div>
                   </div>
                 </Card>
+                </Link>
               ))}
             </div>
           </div>

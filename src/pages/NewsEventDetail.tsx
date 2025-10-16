@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { db } from "@/firebase/config";
@@ -5,8 +6,9 @@ import { doc, getDoc } from "firebase/firestore";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
 
 interface NewsEvent {
   id: string;
@@ -15,7 +17,8 @@ interface NewsEvent {
   content: string;
   imageUrl: string;
   published: boolean;
-  createdAt: any; 
+  createdAt: any;
+  registrationLink?: string;
 }
 
 const NewsEventDetail = () => {
@@ -34,7 +37,7 @@ const NewsEventDetail = () => {
         if (docSnap.exists()) {
           setItem({ ...docSnap.data(), id: docSnap.id } as NewsEvent);
         } else {
-          setError("News or event not found.");
+          setError("Item not found.");
         }
       } catch (err) {
         setError("Failed to fetch the content. Please try again later.");
@@ -66,20 +69,25 @@ const NewsEventDetail = () => {
         <div className="container mx-auto px-4">
           <Card className="max-w-4xl mx-auto">
             <CardHeader>
-              <Badge className={item.category === 'event' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}>
-                {item.category}
-              </Badge>
+              <Badge className={`mb-4 w-min ${item.category === 'event' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{item.category}</Badge>
               <CardTitle className="text-4xl font-bold mt-4">{item.title}</CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                <Calendar className="h-4 w-4" />
-                <span>{new Date(item.createdAt?.toDate()).toLocaleDateString()}</span>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>{new Date(item.createdAt?.toDate()).toLocaleDateString()}</span>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <img src={item.imageUrl} alt={item.title} className="w-full rounded-lg mb-8" />
-              <div className="prose dark:prose-invert max-w-none">
-                <p>{item.content}</p>
-              </div>
+              <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: item.content }} />
+              {item.category === 'event' && item.registrationLink && (
+                <div className="mt-8 text-center">
+                  <a href={item.registrationLink} target="_blank" rel="noopener noreferrer">
+                    <Button size="lg">Register for this Event</Button>
+                  </a>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
