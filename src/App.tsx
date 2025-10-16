@@ -9,7 +9,7 @@ import SplashAnimation from "./components/SplashAnimation";
 
 const queryClient = new QueryClient();
 
-
+// Lazy load all the pages
 const Index = lazy(() => import("./pages/Index"));
 const About = lazy(() => import("./pages/About"));
 const Executives = lazy(() => import("./pages/Executives"));

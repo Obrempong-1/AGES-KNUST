@@ -1,22 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/config';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { Card } from '@/components/ui/card';
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { motion, useInView } from "framer-motion";
-import 'react-quill/dist/quill.snow.css';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Announcement {
   id: string;
   title: string;
-  content: string;
+  body: string;
   imageUrl: string;
   published: boolean;
   createdAt: any;
@@ -24,101 +16,133 @@ interface Announcement {
 
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const announcementRef = useRef<HTMLDivElement>(null);
-  const isAnnouncementVisible = useInView(announcementRef, { once: true, amount: 0.2 });
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (!api) return;
-    setCurrent(api.selectedScrollSnap());
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap());
-    });
-  }, [api]);
+    const fetchAnnouncements = async () => {
+      try {
+        const q = query(
+          collection(db, 'announcements'),
+          where('published', '==', true),
+          orderBy('createdAt', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+        const announcementsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Announcement[];
+        setAnnouncements(announcementsData);
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    setLoading(true);
-    const announcementsCollectionRef = collection(db, "announcements");
-    const q = query(
-      announcementsCollectionRef,
-      where("published", "==", true),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      setAnnouncements(
-        querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as Announcement[]
-      );
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching announcements in real-time:", error);
-      setError("Failed to fetch announcements. A required Firestore index is likely missing. Check the browser console for a link to create it.");
-      setLoading(false);
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    fetchAnnouncements();
   }, []);
 
-  if (loading || error) {
+  const nextAnnouncement = () => {
+    setCurrentIndex(prevIndex => (prevIndex + 1) % announcements.length);
+  };
+
+  const prevAnnouncement = () => {
+    setCurrentIndex(prevIndex =>
+      prevIndex === 0 ? announcements.length - 1 : prevIndex - 1
+    );
+  };
+
+  if (loading || announcements.length === 0) {
     return null;
   }
 
-  if (announcements.length === 0) {
-    return null;
-  }
+  const slideVariants: Variants = {
+    hidden: {
+      opacity: 0,
+      x: '-100%',
+      rotate: -10,
+    },
+    visible: {
+      opacity: 1,
+      x: '0%',
+      rotate: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 40,
+        damping: 12,
+      },
+    },
+    exit: {
+        opacity: 0,
+        x: '100%',
+        rotate: 10,
+        transition: {
+          duration: 0.3
+        },
+    }
+  };
 
   return (
-    <section ref={announcementRef} className="py-20 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <Carousel setApi={setApi} opts={{ align: "start", loop: true }} className="relative">
-          <CarouselContent>
-            {announcements.map((announcement) => (
-              <CarouselItem key={announcement.id}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: isAnnouncementVisible ? 1 : 0, scale: isAnnouncementVisible ? 1 : 0.95 }}
-                  transition={{ type: "spring", stiffness: 50, damping: 20 }}
-                >
-                  <Card className="shadow-2xl rounded-2xl border-4 border-primary/10 hover:shadow-primary/20 transition-all duration-300 overflow-hidden">
+    <div className="relative w-full max-w-4xl mx-auto my-12" aria-live="polite">
+        <AnimatePresence mode='wait'>
+            <motion.div
+                key={currentIndex}
+                variants={slideVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+            >
+                <Card className="overflow-hidden shadow-lg rounded-2xl">
+                    <CardContent className="p-0">
                     <div className="md:flex">
-                      <div className="md:w-1/2">
-                        <img src={announcement.imageUrl} alt={announcement.title} className="object-cover h-full w-full" />
-                      </div>
-                      <div className="md:w-1/2 p-10">
-                        <h2 className="text-4xl font-extrabold text-primary mb-5">{announcement.title}</h2>
-                        <div className="ql-snow">
-                          <div
-                            className="ql-editor"
-                            dangerouslySetInnerHTML={{ __html: announcement.content }}
-                          />
+                        <div className="md:w-1/2">
+                        <img 
+                            src={announcements[currentIndex].imageUrl} 
+                            alt={announcements[currentIndex].title} 
+                            className="object-cover w-full h-64 md:h-full"
+                        />
                         </div>
-                      </div>
+                        <div className="p-8 md:w-1/2 flex flex-col justify-center">
+                        <h3 className="text-2xl font-bold mb-4">{announcements[currentIndex].title}</h3>
+                        <p className="text-muted-foreground">{announcements[currentIndex].body}</p>
+                        </div>
                     </div>
-                  </Card>
-                </motion.div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
-        </Carousel>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        </AnimatePresence>
+
         {announcements.length > 1 && (
-          <div className="flex md:hidden items-center justify-center space-x-2 mt-4">
-            {announcements.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => api?.scrollTo(i)}
-                className={`h-2 w-2 rounded-full transition-colors ${i === current ? 'bg-primary' : 'bg-gray-300'}`}
-              />
+        <>
+          <button 
+            onClick={prevAnnouncement} 
+            className="absolute top-1/2 -left-4 md:-left-12 transform -translate-y-1/2 bg-card/50 backdrop-blur-sm rounded-full p-2 z-10 hover:bg-card/80 transition-colors"
+            aria-label="Previous announcement"
+            >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button 
+            onClick={nextAnnouncement} 
+            className="absolute top-1/2 -right-4 md:-right-12 transform -translate-y-1/2 bg-card/50 backdrop-blur-sm rounded-full p-2 z-10 hover:bg-card/80 transition-colors"
+            aria-label="Next announcement"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+          
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            {announcements.map((_, index) => (
+                <button 
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${currentIndex === index ? 'bg-primary scale-125' : 'bg-muted/50'}`}
+                    aria-label={`Go to announcement ${index + 1}`}
+                />
             ))}
           </div>
-        )}
-      </div>
-    </section>
+        </>
+      )}
+    </div>
   );
 };
 
