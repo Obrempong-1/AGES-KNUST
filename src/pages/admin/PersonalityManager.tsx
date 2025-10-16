@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { db } from "@/firebase/config";
 import {
@@ -28,8 +27,7 @@ interface Personality {
   name: string;
   level: string;
   description: string;
-  media_url: string;
-  media_type: 'image' | 'video';
+  photo_url: string;
   week_start: string;
   week_end: string;
   is_active: boolean;
@@ -52,7 +50,7 @@ const PersonalityManager = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
-  const { uploading, uploadFile, deleteFile } = useImageUpload({ path: 'personalities' });
+  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'personalities' });
 
   const fetchPersonalities = useCallback(async () => {
     try {
@@ -84,7 +82,7 @@ const PersonalityManager = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [], "video/*": [] },
+    accept: { "image/*": [] },
     multiple: false,
   });
 
@@ -92,23 +90,21 @@ const PersonalityManager = () => {
     e.preventDefault();
 
     if (!uploadedFile && !editingPersonality) {
-      toast.error("Please upload a file");
+      toast.error("Please upload an image");
       return;
     }
 
     setLoading(true);
 
     try {
-      let media_url = editingPersonality?.media_url || "";
-      let media_type = editingPersonality?.media_type || (uploadedFile?.type.startsWith('image/') ? 'image' : 'video');
+      let photo_url = editingPersonality?.photo_url || "";
 
       if (uploadedFile) {
-        if (editingPersonality?.media_url) {
-          await deleteFile(editingPersonality.media_url);
+        if (editingPersonality?.photo_url) {
+          await deleteImage(editingPersonality.photo_url);
         }
-        const new_media_url = await uploadFile(uploadedFile);
-        if(new_media_url) media_url = new_media_url;
-        media_type = uploadedFile.type.startsWith('image/') ? 'image' : 'video';
+        const new_photo_url = await uploadImage(uploadedFile);
+        if(new_photo_url) photo_url = new_photo_url;
       }
 
       if (formData.is_active) {
@@ -125,13 +121,12 @@ const PersonalityManager = () => {
 
       if (editingPersonality) {
         const personalityDoc = doc(db, "personality_of_week", editingPersonality.id);
-        await updateDoc(personalityDoc, { ...formData, media_url, media_type });
+        await updateDoc(personalityDoc, { ...formData, photo_url });
         toast.success("Personality updated successfully");
       } else {
         await addDoc(personalitiesCollectionRef, {
           ...formData,
-          media_url,
-          media_type,
+          photo_url,
           created_at: new Date().toISOString(),
         });
         toast.success("Personality added successfully");
@@ -151,8 +146,8 @@ const PersonalityManager = () => {
 
     setLoading(true);
     try {
-      if (personality.media_url) {
-        await deleteFile(personality.media_url);
+      if (personality.photo_url) {
+        await deleteImage(personality.photo_url);
       }
       await deleteDoc(doc(db, "personality_of_week", personality.id));
       toast.success("Personality deleted");
@@ -174,7 +169,7 @@ const PersonalityManager = () => {
       week_end: personality.week_end,
       is_active: personality.is_active,
     });
-    setPreviewUrl(personality.media_url);
+    setPreviewUrl(personality.photo_url);
     setUploadedFile(null);
   };
 
@@ -239,25 +234,15 @@ const PersonalityManager = () => {
           >
             <input {...getInputProps()} />
             {previewUrl ? (
-              uploadedFile?.type.startsWith('image/') ? (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="max-h-48 mx-auto rounded"
-                />
-              ) : (
-                <video
-                  src={previewUrl}
-                  className="max-h-48 mx-auto rounded"
-                  autoPlay
-                  muted
-                  loop
-                />
-              )
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="max-h-48 mx-auto rounded"
+              />
             ) : (
               <div>
                 <Upload className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                <p>Drag & drop a file, or click to select</p>
+                <p>Drag & drop an image, or click to select</p>
               </div>
             )}
           </div>
@@ -336,21 +321,11 @@ const PersonalityManager = () => {
         {personalities.map((person) => (
           <Card key={person.id} className="p-4">
             <div className="flex items-center gap-4">
-              {person.media_type === 'image' ? (
-                <img
-                  src={person.media_url}
-                  alt={person.name}
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-              ) : (
-                <video
-                  src={person.media_url}
-                  className="w-20 h-20 rounded-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                />
-              )}
+              <img
+                src={person.photo_url}
+                alt={person.name}
+                className="w-20 h-20 rounded-full object-cover"
+              />
               <div className="flex-1">
                 <h3 className="font-bold">{person.name}</h3>
                 <p className="text-sm text-muted-foreground">{person.level}</p>

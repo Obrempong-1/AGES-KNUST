@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "@/firebase/config";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp } from "firebase/firestore";
@@ -16,8 +15,7 @@ interface Announcement {
   id: string;
   title: string;
   body: string;
-  mediaUrl: string;
-  mediaType: 'image' | 'video';
+  imageUrl: string;
   published: boolean;
   createdAt: any;
 }
@@ -30,13 +28,12 @@ export default function AnnouncementsManager() {
     title: "",
     body: "",
     published: true,
-    mediaUrl: "",
-    mediaType: 'image',
+    imageUrl: "",
   });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const { uploading, uploadFile, deleteFile } = useImageUpload({ path: 'announcements' });
+  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'announcements' });
 
   const announcementsCollectionRef = useMemo(() => collection(db, "announcements"), []);
 
@@ -73,13 +70,13 @@ export default function AnnouncementsManager() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [], "video/*": [] },
+    accept: { "image/*": [] },
     multiple: false,
   });
 
   const resetForm = useCallback(() => {
     setEditingId(null);
-    setFormData({ title: "", body: "", published: true, mediaUrl: "", mediaType: 'image' });
+    setFormData({ title: "", body: "", published: true, imageUrl: "" });
     if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
@@ -94,25 +91,23 @@ export default function AnnouncementsManager() {
         return;
     }
     if (!editingId && !uploadedFile) {
-      toast.error("Please upload a file for the new announcement.");
+      toast.error("Please upload an image for the new announcement.");
       return;
     }
 
     try {
-      let finalMediaUrl = formData.mediaUrl || "";
-      let finalMediaType = formData.mediaType;
+      let finalImageUrl = formData.imageUrl || "";
 
       if (uploadedFile) {
-        if (editingId && formData.mediaUrl) {
-          await deleteFile(formData.mediaUrl);
+        if (editingId && formData.imageUrl) {
+          await deleteImage(formData.imageUrl);
         }
-        const newUrl = await uploadFile(uploadedFile);
+        const newUrl = await uploadImage(uploadedFile);
         if (!newUrl) return; 
-        finalMediaUrl = newUrl;
-        finalMediaType = uploadedFile.type.startsWith('image/') ? 'image' : 'video';
+        finalImageUrl = newUrl;
       }
 
-      const dataToSave = { ...formData, mediaUrl: finalMediaUrl, mediaType: finalMediaType, createdAt: serverTimestamp() };
+      const dataToSave = { ...formData, imageUrl: finalImageUrl, createdAt: serverTimestamp() };
 
       if (editingId) {
         const docRef = doc(db, "announcements", editingId);
@@ -128,14 +123,14 @@ export default function AnnouncementsManager() {
     } catch (error: any) {
       toast.error(error.message || "Failed to save announcement.");
     }
-  }, [formData, editingId, uploadedFile, deleteFile, uploadFile, announcementsCollectionRef, fetchAnnouncements, resetForm]);
+  }, [formData, editingId, uploadedFile, deleteImage, uploadImage, announcementsCollectionRef, fetchAnnouncements, resetForm]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!window.confirm("Are you sure?")) return;
     try {
       const toDelete = announcements.find(ann => ann.id === id);
-      if (toDelete?.mediaUrl) {
-        await deleteFile(toDelete.mediaUrl);
+      if (toDelete?.imageUrl) {
+        await deleteImage(toDelete.imageUrl);
       }
       await deleteDoc(doc(db, "announcements", id));
       toast.success("Announcement deleted");
@@ -143,13 +138,13 @@ export default function AnnouncementsManager() {
     } catch (error: any) {
       toast.error(error.message || "Failed to delete.");
     }
-  }, [announcements, deleteFile]);
+  }, [announcements, deleteImage]);
 
   const handleEdit = (ann: Announcement) => {
     setEditingId(ann.id);
-    const { title, body, published, mediaUrl, mediaType } = ann;
-    setFormData({ title, body, published, mediaUrl, mediaType });
-    setPreviewUrl(ann.mediaUrl);
+    const { title, body, published, imageUrl } = ann;
+    setFormData({ title, body, published, imageUrl });
+    setPreviewUrl(ann.imageUrl);
     setUploadedFile(null);
     window.scrollTo(0, 0);
   };
@@ -178,15 +173,11 @@ export default function AnnouncementsManager() {
             }`}>
             <input {...getInputProps()} />
             {previewUrl ? (
-              uploadedFile?.type.startsWith('image/') ? (
-                <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded" />
-              ) : (
-                <video src={previewUrl} className="max-h-48 mx-auto rounded" autoPlay muted loop />
-              )
+              <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded" />
             ) : (
               <div>
                 <Upload className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                <p>Drag & drop file, or click to select</p>
+                <p>Drag & drop image, or click to select</p>
               </div>
             )}
           </div>
@@ -206,11 +197,7 @@ export default function AnnouncementsManager() {
         {announcements.map((ann) => (
           <Card key={ann.id} className="p-4">
             <div className="flex flex-wrap items-center gap-4">
-              {ann.mediaType === 'image' ? (
-                <img src={ann.mediaUrl} alt={ann.title} className="w-24 h-24 rounded-md object-cover"/>
-              ) : (
-                <video src={ann.mediaUrl} className="w-24 h-24 rounded-md object-cover" controls />
-              )}
+              <img src={ann.imageUrl} alt={ann.title} className="w-24 h-24 rounded-md object-cover"/>
               <div className="flex-1 min-w-[200px]">
                 <h3 className="font-bold">{ann.title}</h3>
                 <p className="text-sm text-muted-foreground line-clamp-2">{ann.body}</p>

@@ -1,25 +1,27 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-interface UseFileUploadOptions {
+// Define the shape of the options for the hook
+interface UseImageUploadOptions {
   path: 'executives' | 'gallery' | 'content' | 'news' | 'events' | 'personalities' | 'blogs' | 'announcements';
 }
 
-interface UseFileUploadReturn {
+// Define the return shape of the hook
+interface UseImageUploadReturn {
   uploading: boolean;
-  uploadFile: (file: File) => Promise<string | null>;
-  deleteFile: (publicUrl: string) => Promise<void>;
+  uploadImage: (file: File) => Promise<string | null>;
+  deleteImage: (publicUrl: string) => Promise<void>;
 }
 
 const API_URL = 'https://us-central1-piwc-asokwa-site.cloudfunctions.net/api';
 
-export const useImageUpload = (options: UseFileUploadOptions): UseFileUploadReturn => {
+export const useImageUpload = (options: UseImageUploadOptions): UseImageUploadReturn => {
   const [uploading, setUploading] = useState(false);
 
-  const uploadFile = async (file: File): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     setUploading(true);
     try {
+      // 1. Get the signed URL from the backend
       const response = await fetch(`${API_URL}/generate-upload-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,6 +39,7 @@ export const useImageUpload = (options: UseFileUploadOptions): UseFileUploadRetu
 
       const { uploadUrl, publicUrl } = await response.json();
 
+      // 2. Upload the file to the signed URL
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         body: file,
@@ -47,6 +50,7 @@ export const useImageUpload = (options: UseFileUploadOptions): UseFileUploadRetu
         throw new Error('File upload to Google Cloud Storage failed.');
       }
 
+      // 3. Return the public URL
       return publicUrl;
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred during upload.');
@@ -56,7 +60,7 @@ export const useImageUpload = (options: UseFileUploadOptions): UseFileUploadRetu
     }
   };
 
-  const deleteFile = async (publicUrl: string): Promise<void> => {
+  const deleteImage = async (publicUrl: string): Promise<void> => {
     try {
         const response = await fetch(`${API_URL}/delete-image`, {
             method: 'POST',
@@ -66,14 +70,14 @@ export const useImageUpload = (options: UseFileUploadOptions): UseFileUploadRetu
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete file');
+            throw new Error(errorData.error || 'Failed to delete image');
         }
-        toast.success("File deleted successfully");
+        toast.success("Image deleted successfully");
     } catch (error: any) {
         toast.error(error.message || 'An unexpected error occurred during deletion.');
     }
   };
 
 
-  return { uploading, uploadFile, deleteFile };
+  return { uploading, uploadImage, deleteImage };
 };

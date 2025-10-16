@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { db } from "@/firebase/config";
 import {
@@ -19,21 +18,20 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { Trash2, Upload } from "lucide-react";
-import { useImageUpload } from "@/hooks/useImageUpload"; // Import the new hook
+import { useImageUpload } from "@/hooks/useImageUpload"; 
 
-interface GalleryItem {
+interface GalleryImage {
   id: string;
   title: string;
   caption: string | null;
-  media_url: string;
-  media_type: 'image' | 'video';
+  image_url: string;
   published: boolean;
 }
 
 const galleryCollectionRef = collection(db, "gallery");
 
 const GalleryManager = () => {
-  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
@@ -41,20 +39,20 @@ const GalleryManager = () => {
     published: true,
   });
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<{ url: string; type: string }[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  const { uploading, uploadFile, deleteFile } = useImageUpload({ path: 'gallery' }); // Use the hook
+  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'gallery' }); 
 
-  const fetchItems = useCallback(async () => {
+  const fetchImages = useCallback(async () => {
     setLoading(true);
     try {
       const q = query(galleryCollectionRef, orderBy("created_at", "desc"));
       const querySnapshot = await getDocs(q);
-      const itemsData = querySnapshot.docs.map((doc) => ({
+      const imagesData = querySnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
-      })) as GalleryItem[];
-      setItems(itemsData);
+      })) as GalleryImage[];
+      setImages(imagesData);
     } catch (error: any) {
       console.error("Failed to load gallery:", error);
       toast.error("Failed to load gallery. Check console for details.");
@@ -64,18 +62,18 @@ const GalleryManager = () => {
   }, []);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchImages();
+  }, [fetchImages]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => [...prev, ...acceptedFiles]);
-    const urls = acceptedFiles.map((file) => ({ url: URL.createObjectURL(file), type: file.type }));
+    const urls = acceptedFiles.map((file) => URL.createObjectURL(file));
     setPreviewUrls((prev) => [...prev, ...urls]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [], "video/*": [] },
+    accept: { "image/*": [] },
     multiple: true,
   });
 
@@ -83,41 +81,46 @@ const GalleryManager = () => {
     e.preventDefault();
 
     if (uploadedFiles.length === 0) {
-      toast.error("Please upload at least one file");
+      toast.error("Please upload at least one image");
       return;
     }
 
     try {
       for (const file of uploadedFiles) {
-        const mediaUrl = await uploadFile(file);
-        const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
-        if (mediaUrl) {
+        const imageUrl = await uploadImage(file); 
+        if (imageUrl) {
           await addDoc(galleryCollectionRef, {
             title: formData.title || file.name,
             caption: formData.caption || null,
-            media_url: mediaUrl,
-            media_type: mediaType,
+            image_url: imageUrl,
             published: formData.published,
             created_at: new Date().toISOString(),
           });
         }
       }
 
-      toast.success(`${uploadedFiles.length} file(s) uploaded successfully`);
+      toast.success(`${uploadedFiles.length} image(s) uploaded successfully`);
       resetForm();
-      fetchItems();
+      fetchImages();
     } catch (error: any) {
+      
       console.error("Error during submission process:", error);
     } 
   };
   
-  const handleDelete = async (id: string, mediaUrl: string) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+  const handleDelete = async (id: string, imageUrl: string) => {
+    if (!window.confirm("Are you sure you want to delete this image?")) return;
 
     try {
+      
       await deleteDoc(doc(db, "gallery", id));
-      await deleteFile(mediaUrl);
-      setItems(items.filter(item => item.id !== id));
+
+      
+      await deleteImage(imageUrl);
+
+     
+      setImages(images.filter(img => img.id !== id));
+
     } catch (error: any) {
         toast.error(error.message || 'An error occurred during deletion.');
         console.error("Deletion Error:", error);
@@ -126,9 +129,10 @@ const GalleryManager = () => {
 
   const togglePublished = async (id: string, currentStatus: boolean) => {
     try {
-      const itemDoc = doc(db, "gallery", id);
-      await updateDoc(itemDoc, { published: !currentStatus });
-      setItems(items.map(item => item.id === id ? { ...item, published: !currentStatus } : item));
+      const imageDoc = doc(db, "gallery", id);
+      await updateDoc(imageDoc, { published: !currentStatus });
+      
+      setImages(images.map(img => img.id === id ? { ...img, published: !currentStatus } : img));
       toast.success("Status updated");
     } catch (error: any) {
       toast.error(error.message);
@@ -138,7 +142,7 @@ const GalleryManager = () => {
   const resetForm = () => {
     setFormData({ title: "", caption: "", published: true });
     setUploadedFiles([]);
-    previewUrls.forEach(preview => URL.revokeObjectURL(preview.url));
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
     setPreviewUrls([]);
   };
 
@@ -147,7 +151,7 @@ const GalleryManager = () => {
       <h2 className="text-3xl font-bold mb-8">Manage Gallery</h2>
 
       <Card className="p-6 mb-8">
-        <h3 className="text-xl font-bold mb-4">Upload New Files</h3>
+        <h3 className="text-xl font-bold mb-4">Upload New Images</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div
             {...getRootProps()}
@@ -158,30 +162,19 @@ const GalleryManager = () => {
             <input {...getInputProps()} />
             {previewUrls.length > 0 ? (
               <div className="grid grid-cols-4 gap-4">
-                {previewUrls.map((preview, idx) => (
-                  preview.type.startsWith('image/') ? (
-                    <img
-                      key={idx}
-                      src={preview.url}
-                      alt={`Preview ${idx}`}
-                      className="h-24 w-full object-cover rounded"
-                    />
-                  ) : (
-                    <video
-                      key={idx}
-                      src={preview.url}
-                      className="h-24 w-full object-cover rounded"
-                      autoPlay
-                      muted
-                      loop
-                    />
-                  )
+                {previewUrls.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Preview ${idx}`}
+                    className="h-24 w-full object-cover rounded"
+                  />
                 ))}
               </div>
             ) : (
               <div>
                 <Upload className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                <p>Drag & drop files, or click to select</p>
+                <p>Drag & drop images, or click to select</p>
               </div>
             )}
           </div>
@@ -210,7 +203,7 @@ const GalleryManager = () => {
 
           <div className="flex gap-2">
             <Button type="submit" disabled={uploading || uploadedFiles.length === 0}>
-              {uploading ? 'Uploading...' : 'Upload Files'}
+              {uploading ? 'Uploading...' : 'Upload Images'}
             </Button>
             {uploadedFiles.length > 0 && (
               <Button type="button" variant="outline" onClick={resetForm} disabled={uploading}>
@@ -222,33 +215,25 @@ const GalleryManager = () => {
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {items.map((item) => (
-          <Card key={item.id} className="overflow-hidden">
-            {item.media_type === 'image' ? (
-                <img
-                  src={item.media_url}
-                  alt={item.title}
-                  className="w-full h-48 object-cover"
-                />
-            ) : (
-                <video
-                    src={item.media_url}
-                    className="w-full h-48 object-cover"
-                    controls
-                />
-            )}
+        {images.map((img) => (
+          <Card key={img.id} className="overflow-hidden">
+            <img
+              src={img.image_url}
+              alt={img.title}
+              className="w-full h-48 object-cover"
+            />
             <div className="p-4">
-              <h3 className="font-bold text-sm mb-2">{item.title}</h3>
+              <h3 className="font-bold text-sm mb-2">{img.title}</h3>
               <div className="flex items-center justify-between">
                 <Switch
-                  checked={item.published}
-                  onCheckedChange={() => togglePublished(item.id, item.published)}
+                  checked={img.published}
+                  onCheckedChange={() => togglePublished(img.id, img.published)}
                 />
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => handleDelete(item.id, item.media_url)}
-                  disabled={loading}
+                  onClick={() => handleDelete(img.id, img.image_url)}
+                  disabled={loading} 
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
