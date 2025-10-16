@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
@@ -33,7 +33,7 @@ const Executives = () => {
 
   const executivesCollectionRef = collection(db, "executives");
 
-  const fetchExecutives = async () => {
+  const fetchExecutives = useCallback(async () => {
     try {
       const q = query(
         executivesCollectionRef,
@@ -52,9 +52,9 @@ const Executives = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [executivesCollectionRef]);
 
-  const fetchOpenPositions = async () => {
+  const fetchOpenPositions = useCallback(async () => {
     try {
       const q = query(
         collection(db, "positions"),
@@ -71,12 +71,12 @@ const Executives = () => {
     } catch (error) {
       console.error("Error fetching open positions:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchExecutives();
     fetchOpenPositions();
-  }, []);
+  }, [fetchExecutives, fetchOpenPositions]);
 
   return (
     <div className="min-h-screen">
@@ -187,7 +187,7 @@ const Executives = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <a href={`mailto:careers@department.edu?subject=Application%20for%20${selectedPosition}`} className={`w-full ${!selectedPosition ? 'pointer-events-none' : ''}`}>
+                    <a href={`mailto:agesknust26@gmail.com?subject=Application%20for%20${selectedPosition}`} className={`w-full ${!selectedPosition ? 'pointer-events-none' : ''}`}>
                       <Button className="w-full" disabled={!selectedPosition}>
                         Apply Now
                       </Button>

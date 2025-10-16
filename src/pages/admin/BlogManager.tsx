@@ -162,17 +162,17 @@ const BlogManager = () => {
           <Input
             placeholder="Title"
             value={currentPost.title || ''}
-            onChange={(e) => setCurrentPost({ ...currentPost, title: e.target.value })}
+            onChange={(e) => setCurrentPost(prev => ({ ...prev, title: e.target.value }))}
           />
           <Input
             placeholder="Author"
             value={currentPost.author || ''}
-            onChange={(e) => setCurrentPost({ ...currentPost, author: e.target.value })}
+            onChange={(e) => setCurrentPost(prev => ({ ...prev, author: e.target.value }))}
           />
            <Textarea
             placeholder="Short Description"
             value={currentPost.shortDescription || ''}
-            onChange={(e) => setCurrentPost({ ...currentPost, shortDescription: e.target.value })}
+            onChange={(e) => setCurrentPost(prev => ({ ...prev, shortDescription: e.target.value }))}
             rows={3}
           />
           <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary">
@@ -187,7 +187,7 @@ const BlogManager = () => {
           <ReactQuill
             theme="snow"
             value={currentPost.content || ''}
-            onChange={(content) => setCurrentPost({ ...currentPost, content })}
+            onChange={(content) => setCurrentPost(prev => ({ ...prev, content }))}
           />
 
           <div className="flex items-center gap-4">

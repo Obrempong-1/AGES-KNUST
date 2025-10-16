@@ -7,7 +7,7 @@ const SplashAnimation = () => {
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
       transition={{ delay: 2, duration: 0.5 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background"
     >
       <motion.img
         src={Logo}
@@ -17,6 +17,14 @@ const SplashAnimation = () => {
         transition={{ duration: 1, ease: "easeOut" }}
         className="w-32 h-32"
       />
+      <motion.h1
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+        className="text-2xl font-bold mt-4"
+      >
+        AGES-KNUST
+      </motion.h1>
     </motion.div>
   );
 };
