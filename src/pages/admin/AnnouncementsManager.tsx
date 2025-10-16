@@ -17,22 +17,22 @@ interface Announcement {
   createdAt: any;
 }
 
+const announcementsCollectionRef = collection(db, "announcements");
+
 const AnnouncementsManager = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [currentAnnouncement, setCurrentAnnouncement] = useState<Partial<Announcement>>({});
   const [isEditing, setIsEditing] = useState(false);
 
-  const announcementsCollectionRef = collection(db, "announcements");
-
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     const q = query(announcementsCollectionRef, orderBy("createdAt", "desc"));
     const data = await getDocs(q);
     setAnnouncements(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as Announcement[]);
-  };
+  }, []);
 
   useEffect(() => {
     fetchAnnouncements();
-  }, []);
+  }, [fetchAnnouncements]);
 
   const handleSave = async () => {
     if (!currentAnnouncement.title || !currentAnnouncement.details) {

@@ -48,7 +48,7 @@ const Contact = () => {
 
       await response.json();
 
-      toast.success("Message sent successfully! We\'ll get back to you soon.");
+      toast.success("Message sent successfully! We will get back to you soon.");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error: any) {
       console.error("Error sending message:", error);
@@ -79,7 +79,7 @@ const Contact = () => {
         <section className="pt-32 pb-16 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
           <div className="container mx-auto px-4">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 text-center animate-fade-in" dangerouslySetInnerHTML={{ __html: content.title || "Contact Us" }} />
-            <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto animate-fade-in" dangerouslySetInnerHTML={{ __html: content.subtitle || "We\'d love to hear from you. Please get in touch with us using the form below or through our contact details." }} />
+            <p className="text-xl text-muted-foreground text-center max-w-3xl mx-auto animate-fade-in" dangerouslySetInnerHTML={{ __html: content.subtitle || "We would love to hear from you. Please get in touch with us using the form below or through our contact details." }} />
           </div>
         </section>
 

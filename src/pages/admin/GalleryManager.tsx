@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { Trash2, Upload } from "lucide-react";
-import { useImageUpload } from "@/hooks/useImageUpload"; // Import the new hook
+import { useImageUpload } from "@/hooks/useImageUpload"; 
 
 interface GalleryImage {
   id: string;
@@ -27,6 +27,8 @@ interface GalleryImage {
   image_url: string;
   published: boolean;
 }
+
+const galleryCollectionRef = collection(db, "gallery");
 
 const GalleryManager = () => {
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -39,10 +41,9 @@ const GalleryManager = () => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  const galleryCollectionRef = collection(db, "gallery");
-  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'gallery' }); // Use the hook
+  const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'gallery' }); 
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     setLoading(true);
     try {
       const q = query(galleryCollectionRef, orderBy("created_at", "desc"));
@@ -58,11 +59,11 @@ const GalleryManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchImages();
-  }, []);
+  }, [fetchImages]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => [...prev, ...acceptedFiles]);
@@ -86,7 +87,7 @@ const GalleryManager = () => {
 
     try {
       for (const file of uploadedFiles) {
-        const imageUrl = await uploadImage(file); // Use the hook's function
+        const imageUrl = await uploadImage(file); 
         if (imageUrl) {
           await addDoc(galleryCollectionRef, {
             title: formData.title || file.name,
@@ -102,7 +103,7 @@ const GalleryManager = () => {
       resetForm();
       fetchImages();
     } catch (error: any) {
-      // The hook will show the toast, but you might want to log here
+      
       console.error("Error during submission process:", error);
     } 
   };
@@ -111,13 +112,13 @@ const GalleryManager = () => {
     if (!window.confirm("Are you sure you want to delete this image?")) return;
 
     try {
-      // 1. Delete the Firestore document
+      
       await deleteDoc(doc(db, "gallery", id));
 
-      // 2. Delete the image from Storage via the hook
+      
       await deleteImage(imageUrl);
 
-      // 3. Update the UI
+     
       setImages(images.filter(img => img.id !== id));
 
     } catch (error: any) {
@@ -130,7 +131,7 @@ const GalleryManager = () => {
     try {
       const imageDoc = doc(db, "gallery", id);
       await updateDoc(imageDoc, { published: !currentStatus });
-      // Optimistic UI update
+      
       setImages(images.map(img => img.id === id ? { ...img, published: !currentStatus } : img));
       toast.success("Status updated");
     } catch (error: any) {
@@ -232,7 +233,7 @@ const GalleryManager = () => {
                   size="sm"
                   variant="destructive"
                   onClick={() => handleDelete(img.id, img.image_url)}
-                  disabled={loading} // You might want a specific loading state for delete
+                  disabled={loading} 
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

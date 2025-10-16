@@ -33,6 +33,8 @@ interface Personality {
   is_active: boolean;
 }
 
+const personalitiesCollectionRef = collection(db, "personality_of_week");
+
 const PersonalityManager = () => {
   const [personalities, setPersonalities] = useState<Personality[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,10 +50,9 @@ const PersonalityManager = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
-  const personalitiesCollectionRef = collection(db, "personality_of_week");
   const { uploading, uploadImage, deleteImage } = useImageUpload({ path: 'personalities' });
 
-  const fetchPersonalities = async () => {
+  const fetchPersonalities = useCallback(async () => {
     try {
       const q = query(personalitiesCollectionRef, orderBy("created_at", "desc"));
       const querySnapshot = await getDocs(q);
@@ -65,11 +66,11 @@ const PersonalityManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPersonalities();
-  }, []);
+  }, [fetchPersonalities]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];

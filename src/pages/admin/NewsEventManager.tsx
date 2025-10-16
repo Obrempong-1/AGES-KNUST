@@ -26,6 +26,8 @@ interface NewsEvent {
   registrationLink?: string;
 }
 
+const itemsCollectionRef = collection(db, "news_events");
+
 export default function NewsEventManager() {
   const [items, setItems] = useState<NewsEvent[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<NewsEvent>>({ category: 'news', published: false });
@@ -50,9 +52,7 @@ export default function NewsEventManager() {
     multiple: false,
   });
 
-  const itemsCollectionRef = collection(db, "news_events");
-
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
         const q = query(itemsCollectionRef, orderBy("createdAt", "desc"));
@@ -64,11 +64,11 @@ export default function NewsEventManager() {
     } finally {
         setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
   const handleSave = async () => {
     if (!currentItem.title || !currentItem.content) {

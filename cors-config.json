@@ -1,11 +1,9 @@
 [
     {
       "origin": [
-        "https://9000-firebase-ages-1760433653569.cluster-fbfjltn375c6wqxlhoehbz44sk.cloudworkstations.dev",
-        "http://localhost:8081",
+        "http://localhost:5173",
         "http://localhost:3000",
-        "https://piwc-asokwa-site.web.app",
-        "https://piwc-asokwa-site.firebaseapp.com"
+        "https://ages-knust.vercel.app"
       ],
       "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
       "responseHeader": ["Content-Type", "Access-Control-Allow-Origin"],

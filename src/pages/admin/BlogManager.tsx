@@ -24,6 +24,8 @@ interface BlogPost {
   createdAt: any;
 }
 
+const postsCollectionRef = collection(db, "blogs");
+
 const BlogManager = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [currentPost, setCurrentPost] = useState<Partial<BlogPost>>({});
@@ -47,13 +49,11 @@ const BlogManager = () => {
     multiple: false,
   });
 
-  const postsCollectionRef = collection(db, "blogs");
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     const q = query(postsCollectionRef, orderBy("createdAt", "desc"));
     const data = await getDocs(q);
     setPosts(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as BlogPost[]);
-  };
+  }, []);
 
   useEffect(() => {
     fetchPosts();
@@ -62,7 +62,7 @@ const BlogManager = () => {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [previewUrl]);
+  }, [fetchPosts, previewUrl]);
 
   const handleSave = async () => {
     if (!currentPost.title || !currentPost.author || !currentPost.content) {

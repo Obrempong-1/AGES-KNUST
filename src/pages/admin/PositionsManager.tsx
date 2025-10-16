@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { db } from "@/firebase/config";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -15,22 +15,22 @@ interface Position {
   createdAt: any;
 }
 
+const itemsCollectionRef = collection(db, "positions");
+
 const PositionsManager = () => {
   const [items, setItems] = useState<Position[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<Position>>({ title: '' });
   const [isEditing, setIsEditing] = useState(false);
 
-  const itemsCollectionRef = collection(db, "positions");
-
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     const q = query(itemsCollectionRef, orderBy("createdAt", "desc"));
     const data = await getDocs(q);
     setItems(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as Position[]);
-  };
+  }, []);
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
   const handleSave = async () => {
     try {
