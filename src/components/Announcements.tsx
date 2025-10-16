@@ -17,6 +17,7 @@ interface Announcement {
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ const Announcements = () => {
           collection(db, 'announcements'),
           where('published', '==', true),
           orderBy('createdAt', 'desc'),
-          limit(10)
+          limit(5)
         );
         const querySnapshot = await getDocs(q);
         const announcementsData = querySnapshot.docs.map(doc => ({
@@ -45,10 +46,12 @@ const Announcements = () => {
   }, []);
 
   const nextAnnouncement = () => {
+    setDirection(1);
     setCurrentIndex(prevIndex => (prevIndex + 1) % announcements.length);
   };
 
   const prevAnnouncement = () => {
+    setDirection(-1);
     setCurrentIndex(prevIndex =>
       prevIndex === 0 ? announcements.length - 1 : prevIndex - 1
     );
@@ -59,36 +62,31 @@ const Announcements = () => {
   }
 
   const slideVariants: Variants = {
-    hidden: {
+    hidden: (direction: number) => ({
       opacity: 0,
-      x: '-100%',
-      rotate: -10,
-    },
+      x: direction > 0 ? '100%' : '-100%',
+      scale: 0.98,
+    }),
     visible: {
       opacity: 1,
       x: '0%',
-      rotate: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 40,
-        damping: 12,
-      },
+      scale: 1,
+      transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
     },
-    exit: {
-        opacity: 0,
-        x: '100%',
-        rotate: 10,
-        transition: {
-          duration: 0.3
-        },
-    }
+    exit: (direction: number) => ({
+      opacity: 0,
+      x: direction < 0 ? '100%' : '-100%',
+      scale: 0.98,
+      transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+    }),
   };
 
   return (
     <div className="relative w-full max-w-4xl mx-auto my-12" aria-live="polite">
-        <AnimatePresence mode='wait'>
+        <AnimatePresence initial={false} custom={direction} mode="wait">
             <motion.div
                 key={currentIndex}
+                custom={direction}
                 variants={slideVariants}
                 initial="hidden"
                 animate="visible"
@@ -96,16 +94,16 @@ const Announcements = () => {
             >
                 <Card className="overflow-hidden shadow-lg rounded-2xl">
                     <CardContent className="p-0">
-                    <div className="md:flex">
-                        <div className="md:w-1/2">
+                    <div className="flex flex-col sm:flex-row">
+                        <div className="sm:w-1/2 aspect-video sm:aspect-auto">
                         <img 
                             src={announcements[currentIndex].imageUrl} 
                             alt={announcements[currentIndex].title} 
-                            className="object-cover w-full h-64 md:h-full"
+                            className="object-cover w-full h-full"
                             loading="lazy"
                         />
                         </div>
-                        <div className="p-8 md:w-1/2 flex flex-col justify-center">
+                        <div className="p-8 sm:w-1/2 flex flex-col justify-center">
                         <h3 className="text-2xl font-bold mb-4">{announcements[currentIndex].title}</h3>
                         <p className="text-muted-foreground">{announcements[currentIndex].body}</p>
                         </div>

@@ -32,7 +32,7 @@ import { db } from "@/firebase/config";
 import Announcements from "@/components/Announcements";
 
 const Index = () => {
-  const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: false }));
+  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
   const whatWeDoRef = useRef<HTMLDivElement>(null);
   const blogsRef = useRef<HTMLDivElement>(null);
   const newsRef = useRef<HTMLDivElement>(null);
@@ -190,6 +190,8 @@ const Index = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
+        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
       </Carousel>
 
       <Announcements />
