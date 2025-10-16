@@ -1,13 +1,13 @@
-importScripts('https://www.gstatic.com/firebasejs/9.2.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.2.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.11.1/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-  apiKey: "undefined",
-  authDomain: "undefined",
-  projectId: "undefined",
-  storageBucket: "undefined",
-  messagingSenderId: "undefined",
-  appId: "undefined"
+  apiKey: "AIzaSyCo4VLD0stXjqOsmaQhJtqXrcY3A7rJsOM",
+  authDomain: "piwc-asokwa-site.firebaseapp.com",
+  projectId: "piwc-asokwa-site",
+  storageBucket: "piwc-asokwa-site.appspot.com",
+  messagingSenderId: "42717543779",
+  appId: "1:42717543779:web:def05fe5dac43a33f0a756"
 };
 
 firebase.initializeApp(firebaseConfig);
