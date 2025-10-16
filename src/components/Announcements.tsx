@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,7 +25,8 @@ const Announcements = () => {
         const q = query(
           collection(db, 'announcements'),
           where('published', '==', true),
-          orderBy('createdAt', 'desc')
+          orderBy('createdAt', 'desc'),
+          limit(10)
         );
         const querySnapshot = await getDocs(q);
         const announcementsData = querySnapshot.docs.map(doc => ({
@@ -101,6 +102,7 @@ const Announcements = () => {
                             src={announcements[currentIndex].imageUrl} 
                             alt={announcements[currentIndex].title} 
                             className="object-cover w-full h-64 md:h-full"
+                            loading="lazy"
                         />
                         </div>
                         <div className="p-8 md:w-1/2 flex flex-col justify-center">
