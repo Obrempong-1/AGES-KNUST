@@ -185,7 +185,7 @@ const Index = () => {
                           ease: "easeInOut",
                         }}
                       >
-                        <Hand className="h-5 w-5 fill-white/50" />
+                        <Hand className="h-9 w-9 fill-white/50" />
                       </motion.div>
                       <span className="text-xs font-semibold tracking-widest">
                         SWIPE
