@@ -75,8 +75,11 @@ const Footer = () => {
         
         <div className="border-t border-border pt-6 text-center">
           <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} Association of Geomatic Engineering Students by Obrempong Kwabena Osei-Wusu. All rights reserved.
+            &copy; {new Date().getFullYear()} Association of Geomatic Engineering Students. All rights reserved.
           </p>
+          <p className="text-muted-foreground text-xs mt-2">
+            Designed by Obrempong Kwabena Osei-Wusu
+            </p>
         </div>
       </div>
     </footer>
