@@ -21,7 +21,7 @@ const SplashAnimation = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-        className="text-2xl font-bold mt-4"
+        className="text-2xl font-bold mt-4 bg-gradient-to-br from-primary via-foreground to-secondary bg-clip-text text-transparent"
       >
         AGES-KNUST
       </motion.h1>
