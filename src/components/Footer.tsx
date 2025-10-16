@@ -78,7 +78,7 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Association of Geomatic Engineering Students. All rights reserved.
           </p>
           <p className="text-muted-foreground text-sm mt-2">
-            Developed by Obrempong Kwabena Osei-Wusu
+            Developed by Obrempong Kwabena Osei-Wusu.
             </p>
         </div>
       </div>
