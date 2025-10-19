@@ -501,17 +501,18 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <Card
-                key={index}
-                className="p-6 text-center hover:shadow-lg transition-shadow animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <stat.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
-                <div className="text-3xl font-bold mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">
-                  {stat.label}
-                </div>
-              </Card>
+                <Link to="/about" key={index}>
+                    <Card
+                        className="p-6 text-center hover:shadow-lg transition-shadow animate-fade-in h-full"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                        <stat.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
+                        <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                        <div className="text-sm text-muted-foreground">
+                        {stat.label}
+                        </div>
+                    </Card>
+                </Link>
             ))}
           </div>
         </div>
