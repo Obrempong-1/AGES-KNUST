@@ -321,7 +321,7 @@ const PersonalityManager = () => {
             <Input placeholder="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
             <Input placeholder="Level/Position (e.g., Level 300)" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} required />
             <Input placeholder="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
-            <Input placeholder="Year (e.g., 2024)" value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })} />
+            <Input placeholder="Year (e.g., Year 1, Year 2, Year 3 or final year)" value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })} />
             <Input placeholder="High School Attended" value={formData.highSchool} onChange={(e) => setFormData({ ...formData, highSchool: e.target.value })} />
             <Input placeholder="Favorite Geomatic Course" value={formData.favoriteCourse} onChange={(e) => setFormData({ ...formData, favoriteCourse: e.target.value })} />
           </div>
