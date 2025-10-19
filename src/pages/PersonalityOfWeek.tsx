@@ -6,13 +6,21 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Calendar, Award } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Personality {
   id: string;
   name: string;
   level: string;
   description: string;
-  photo_url: string;
+  photo_urls?: string[]; 
+  photo_url?: string; 
   week_start: string;
   week_end: string;
 }
@@ -31,6 +39,8 @@ const PersonalityOfWeek = () => {
       if (!querySnapshot.empty) {
         const personalityData = { ...querySnapshot.docs[0].data(), id: querySnapshot.docs[0].id } as Personality;
         setPersonality(personalityData);
+      } else {
+        // No active personality found
       }
     } catch (error: any) {
       console.error("Error fetching personality:", error);
@@ -51,6 +61,19 @@ const PersonalityOfWeek = () => {
       </div>
     );
   }
+
+  
+  const getPhotoUrls = () => {
+    if (personality?.photo_urls) {
+      return personality.photo_urls; 
+    }
+    if (personality?.photo_url) {
+      return [personality.photo_url]; 
+    }
+    return []; 
+  };
+
+  const photoUrls = getPhotoUrls();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -82,15 +105,33 @@ const PersonalityOfWeek = () => {
                 <div className="grid md:grid-cols-2 gap-0">
                   
                   <div className="relative overflow-hidden group">
-                    <img
-                      src={personality.photo_url}
-                      alt={personality.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    
-                    <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-white/50 transition-all duration-300 group-hover:w-20 group-hover:h-20"></div>
-                    <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-white/50 transition-all duration-300 group-hover:w-20 group-hover:h-20"></div>
+                    <Carousel className="w-full h-full">
+                      <CarouselContent>
+                        {photoUrls.length > 0 ? (
+                          photoUrls.map((url, index) => (
+                            <CarouselItem key={index}>
+                              <img
+                                src={url}
+                                alt={`${personality.name} - ${index + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                              />
+                            </CarouselItem>
+                          ))
+                        ) : (
+                          <CarouselItem>
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <p className="text-muted-foreground">No Image Available</p>
+                            </div>
+                          </CarouselItem>
+                        )}
+                      </CarouselContent>
+                      {photoUrls.length > 1 && (
+                        <>
+                          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/75" />
+                          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/75" />
+                        </>
+                      )}
+                    </Carousel>
                   </div>
 
                   

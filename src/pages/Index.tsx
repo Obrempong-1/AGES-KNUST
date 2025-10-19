@@ -36,12 +36,21 @@ import ScrollZoom from "@/components/ScrollZoom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 
+interface Personality {
+    id: string;
+    name: string;
+    level: string;
+    photo_urls?: string[];
+    photo_url?: string; 
+  }
+
 const Index = () => {
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
   const isMobile = useIsMobile();
 
   const [blogPosts, setBlogPosts] = useState([]);
   const [newsEvents, setNewsEvents] = useState([]);
+  const [personality, setPersonality] = useState<Personality | null>(null);
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -59,7 +68,7 @@ const Index = () => {
           id: doc.id,
           title: data.title,
           date: data.createdAt.toDate().toISOString(),
-          image: data.imageUrl,
+          image: data.mediaUrl,
           short_description: data.shortDescription,
           author: data.author,
           link: `/blog/${doc.id}`,
@@ -83,7 +92,7 @@ const Index = () => {
             id: doc.id,
             title: data.title,
             date: data.createdAt.toDate().toISOString(),
-            image: data.imageUrl,
+            image: data.mediaUrl,
             description: data.shortDescription,
             link: `/news-events#${doc.id}`,
           };
@@ -91,9 +100,36 @@ const Index = () => {
         setNewsEvents(newsData);
       };
 
+      const fetchPersonality = async () => {
+        const personalityCollectionRef = collection(db, "personality_of_week");
+        const q = query(
+          personalityCollectionRef,
+          where("is_active", "==", true),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const personalityData = querySnapshot.docs[0].data() as Personality;
+          setPersonality(personalityData);
+        }
+      };
+
     fetchBlogs();
     fetchNewsEvents();
+    fetchPersonality();
   }, []);
+
+  const getPersonalityImageUrls = () => {
+    if (personality?.photo_urls && personality.photo_urls.length > 0) {
+      return personality.photo_urls;
+    }
+    if (personality?.photo_url) {
+      return [personality.photo_url];
+    }
+    return [];
+  };
+
+  const personalityImageUrls = getPersonalityImageUrls();
 
   const heroSlides = [
     {
@@ -316,6 +352,45 @@ const Index = () => {
 
       <section className="py-20 bg-background text-center">
         <div className="container mx-auto px-4">
+        {personality && (
+            <Link to="/personality-of-week">
+              <Card className="max-w-sm mx-auto mb-8 overflow-hidden shadow-lg rounded-lg card-lift cursor-pointer">
+                <Carousel className="w-full">
+                    <CarouselContent>
+                        {personalityImageUrls.length > 0 ? (
+                            personalityImageUrls.map((url, index) => (
+                                <CarouselItem key={index}>
+                                    <img 
+                                        src={url} 
+                                        alt={`${personality.name} - Photo ${index + 1}`} 
+                                        className="w-full h-80 object-cover" 
+                                    />
+                                </CarouselItem>
+                            ))
+                        ) : (
+                            <CarouselItem>
+                                <img 
+                                    src={survey} 
+                                    alt="Default Survey" 
+                                    className="w-full h-80 object-cover" 
+                                />
+                            </CarouselItem>
+                        )}
+                    </CarouselContent>
+                    {personalityImageUrls.length > 1 && (
+                        <>
+                            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/75" />
+                            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/75" />
+                        </>
+                    )}
+                </Carousel>
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold mb-2">{personality.name}</h3>
+                  <p className="text-muted-foreground">{personality.level}</p>
+                </div>
+              </Card>
+            </Link>
+          )}
           <Link to="/personality-of-week">
             <Button
               size="lg"
