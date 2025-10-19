@@ -54,30 +54,38 @@ const Index = () => {
 
   useEffect(() => {
     const fetchBlogs = async () => {
-      const itemsCollectionRef = collection(db, "blogs");
-      const q = query(
-        itemsCollectionRef,
-        where("published", "==", true),
-        orderBy("createdAt", "desc"),
-        limit(4)
-      );
-      const querySnapshot = await getDocs(q);
-      const blogData = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          date: data.createdAt.toDate().toISOString(),
-          image: data.mediaUrl,
-          short_description: data.shortDescription,
-          author: data.author,
-          link: `/blog/${doc.id}`,
-        };
-      });
-      setBlogPosts(blogData);
+      try {
+        const itemsCollectionRef = collection(db, "blogs");
+        const q = query(
+          itemsCollectionRef,
+          where("published", "==", true),
+          orderBy("createdAt", "desc"),
+          limit(4)
+        );
+        const querySnapshot = await getDocs(q);
+        const blogData = querySnapshot.docs.reduce((acc, doc) => {
+          const data = doc.data();
+          if (data && data.createdAt) { // Ensure createdAt exists
+            acc.push({
+              id: doc.id,
+              title: data.title,
+              date: data.createdAt.toDate().toISOString(),
+              image: data.imageUrl, // Corrected field name
+              short_description: data.shortDescription,
+              author: data.author,
+              link: `/blog/${doc.id}`,
+            });
+          }
+          return acc;
+        }, []);
+        setBlogPosts(blogData);
+      } catch (error) {
+        console.error("Error fetching blogs:", error);
+      }
     };
 
     const fetchNewsEvents = async () => {
+      try {
         const itemsCollectionRef = collection(db, "news_events");
         const q = query(
           itemsCollectionRef,
@@ -86,31 +94,41 @@ const Index = () => {
           limit(3)
         );
         const querySnapshot = await getDocs(q);
-        const newsData = querySnapshot.docs.map((doc) => {
+        const newsData = querySnapshot.docs.reduce((acc, doc) => {
           const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title,
-            date: data.createdAt.toDate().toISOString(),
-            image: data.mediaUrl,
-            description: data.shortDescription,
-            link: `/news-events#${doc.id}`,
-          };
-        });
+          if (data && data.createdAt) { 
+            acc.push({
+              id: doc.id,
+              title: data.title,
+              date: data.createdAt.toDate().toISOString(),
+              image: data.imageUrl, 
+              description: data.shortDescription,
+              link: `/news-events#${doc.id}`,
+            });
+          }
+          return acc;
+        }, []);
         setNewsEvents(newsData);
+      } catch (error) {
+        console.error("Error fetching news and events:", error);
+      }
       };
 
       const fetchPersonality = async () => {
-        const personalityCollectionRef = collection(db, "personality_of_week");
-        const q = query(
-          personalityCollectionRef,
-          where("is_active", "==", true),
-          limit(1)
-        );
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const personalityData = querySnapshot.docs[0].data() as Personality;
-          setPersonality(personalityData);
+        try {
+            const personalityCollectionRef = collection(db, "personality_of_week");
+            const q = query(
+            personalityCollectionRef,
+            where("is_active", "==", true),
+            limit(1)
+            );
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+            const personalityData = querySnapshot.docs[0].data() as Personality;
+            setPersonality(personalityData);
+            }
+        } catch (error) {
+            console.error("Error fetching personality of the week:", error);
         }
       };
 
@@ -432,6 +450,7 @@ const Index = () => {
         </section>
       )}
       
+      {blogPosts.length > 0 && (
       <section
         className="py-20 bg-background relative overflow-hidden"
       >
@@ -476,6 +495,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+      )}
 
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">

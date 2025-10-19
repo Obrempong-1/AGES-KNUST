@@ -117,8 +117,7 @@ const PersonalityOfWeek = () => {
           <div className="container mx-auto px-4">
             {personality ? (
               <Card className="max-w-6xl mx-auto animate-fade-in shadow-lg overflow-hidden">
-                <div className="grid md:grid-cols-2">
-                  
+                <div className="grid md:grid-cols-2">  
                   <div className="relative overflow-hidden group">
                     <Carousel className="w-full h-full">
                       <CarouselContent>
@@ -245,7 +244,7 @@ const PersonalityOfWeek = () => {
               <div className="text-center py-20 animate-fade-in">
                 <Award className="h-20 w-20 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-2xl font-bold mb-2">No Personality This Week</h2>
-                <p className="text-muted-foreground">Check back soon for our next featured personality!</p>
+                <p className="text-muted-foreground">Check back soon for our next featured personality</p>
               </div>
             )}
           </div>
