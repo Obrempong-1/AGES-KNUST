@@ -176,10 +176,10 @@ const Index = () => {
     },
   ];
   const stats = [
-    { icon: Users, label: "Active Members", value: "150+" },
-    { icon: BookOpen, label: "Field Surveys", value: "40+" },
-    { icon: Trophy, label: "Projects Completed", value: "75+" },
-    { icon: Calendar, label: "Years Established", value: "15+" },
+    { icon: Users, label: "Active Members", value: "450+" },
+    { icon: BookOpen, label: "Field Surveys", value: "1000+" },
+    { icon: Trophy, label: "Projects Completed", value: "1000+" },
+    { icon: Calendar, label: "Years Established", value: "30+" },
   ];
 
   return (
