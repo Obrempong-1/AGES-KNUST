@@ -4,13 +4,14 @@ import { db } from "@/firebase/config";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { Trash2, Upload } from "lucide-react";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface Announcement {
   id: string;
@@ -157,6 +158,10 @@ export default function AnnouncementsManager() {
     setUploadedFile(null);
     window.scrollTo(0, 0);
   };
+  
+  const handleContentChange = (content: string) => {
+    setFormData({ ...formData, body: content });
+  };
 
   const togglePublished = useCallback(async (id: string, status: boolean) => {
     try {
@@ -177,16 +182,18 @@ export default function AnnouncementsManager() {
           {editingId ? "Edit Announcement" : "Add New Announcement"}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+          <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors bg-muted/20 ${
               isDragActive ? "border-primary bg-primary/5" : "border-muted"
-            }`}>
+            }`}>\
             <input {...getInputProps()} />
             {previewUrl ? (
-              formData.mediaType === 'video' ? (
-                <video src={previewUrl} className="max-h-48 mx-auto rounded" autoPlay muted loop playsInline key={previewUrl} />
-              ) : (
-                <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded" />
-              )
+              <div className="relative aspect-video mx-auto">
+                {formData.mediaType === 'video' ? (
+                  <video src={previewUrl} className="max-h-64 object-contain w-full h-full rounded" autoPlay muted loop playsInline key={previewUrl} />
+                ) : (
+                  <img src={previewUrl} alt="Preview" className="max-h-64 object-contain w-full h-full rounded" />
+                )}
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center">
                 <Upload className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
@@ -196,8 +203,13 @@ export default function AnnouncementsManager() {
             )}
           </div>
           <Input placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
-          <Textarea placeholder="Body" value={formData.body} onChange={(e) => setFormData({ ...formData, body: e.target.value })} required className="min-h-[150px]" />
-          <div className="flex items-center gap-2"><Switch checked={formData.published} onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}/> <label>Published</label></div>
+          <ReactQuill 
+            theme="snow" 
+            value={formData.body} 
+            onChange={handleContentChange}
+            className="bg-card"
+          />
+          <div className="flex items-center gap-2 pt-8"><Switch checked={formData.published} onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}/> <label>Published</label></div>
           <div className="flex gap-2">
             <Button type="submit" disabled={uploading}>
                 {uploading ? 'Saving...' : (editingId ? "Update" : "Add") + ' Announcement'}
@@ -211,16 +223,19 @@ export default function AnnouncementsManager() {
         {announcements.map((ann) => (
           <Card key={ann.id} className="p-4">
             <div className="flex flex-wrap items-center gap-4">
-              <div className="w-24 h-24 rounded-md overflow-hidden bg-black flex-shrink-0">
+              <div className="w-32 h-24 rounded-md overflow-hidden bg-muted/30 flex-shrink-0">
                 {ann.mediaType === 'image' ? (
-                  <img src={ann.mediaUrl} alt={ann.title} className="w-full h-full object-cover"/>
+                  <img src={ann.mediaUrl} alt={ann.title} className="w-full h-full object-contain"/>
                 ) : (
-                  <video src={ann.mediaUrl} className="w-full h-full object-cover" muted loop playsInline />
+                  <video src={ann.mediaUrl} className="w-full h-full object-contain" muted loop playsInline />
                 )}
               </div>
               <div className="flex-1 min-w-[200px]">
                 <h3 className="font-bold">{ann.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{ann.body}</p>
+                <div 
+                    className="text-sm text-muted-foreground line-clamp-2" 
+                    dangerouslySetInnerHTML={{ __html: ann.body }} 
+                />
                 <p className="text-xs text-muted-foreground mt-1">
                   {ann.createdAt && new Date(ann.createdAt?.toDate()).toLocaleString()}
                 </p>

@@ -94,7 +94,7 @@ const Announcements = () => {
           <MegaphoneOff className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-xl font-semibold">No Announcements Yet</h3>
           <p className="mt-2 text-muted-foreground">
-            It's all quiet on the announcement front for now. Please check back later for updates!
+            It's all quiet on the announcement front for now. Please check back later for updates
           </p>
         </div>
       ) : (
@@ -111,7 +111,7 @@ const Announcements = () => {
                   <Card className="overflow-hidden shadow-lg rounded-2xl mt-8">
                       <CardContent className="p-0">
                       <div className="flex flex-col sm:flex-row">
-                          <div className="sm:w-1/2 aspect-video sm:aspect-[4/3] bg-black">
+                          <div className="sm:w-1/2 aspect-video sm:aspect-[4/3] bg-muted/30">
                           {currentAnnouncement.mediaType === 'video' ? (
                             <video
                               src={currentAnnouncement.mediaUrl}
@@ -119,20 +119,20 @@ const Announcements = () => {
                               loop
                               muted
                               playsInline
-                              className="object-cover w-full h-full"
+                              className="object-contain w-full h-full"
                             />
                           ) : (
                             <img 
                                 src={currentAnnouncement.mediaUrl} 
                                 alt={currentAnnouncement.title} 
-                                className="object-cover w-full h-full"
+                                className="object-contain w-full h-full"
                                 loading="lazy"
                             />
                           )}
                           </div>
                           <div className="p-8 sm:w-1/2 flex flex-col justify-center">
                           <h3 className="text-2xl font-bold mb-4">{currentAnnouncement.title}</h3>
-                          <p className="text-muted-foreground">{currentAnnouncement.body}</p>
+                          <div className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: currentAnnouncement.body }} />
                           </div>
                       </div>
                       </CardContent>

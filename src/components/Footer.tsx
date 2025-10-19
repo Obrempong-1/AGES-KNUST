@@ -8,7 +8,7 @@ const Footer = () => {
     { name: "LinkedIn", icon: Linkedin, url: "https://www.linkedin.com/company/association-of-geomatic-engineering-students-ages/posts/?feedView=all", color: "hover:text-[#0077B5]" },
     { name: "TikTok", icon: FaTiktok, url: "https://www.tiktok.com/@ages_knust1?_t=ZM-90cVUJf6LqW&_r=1", color: "hover:text-[#000000]" },
     { name: "Facebook", icon: Facebook, url: "https://www.facebook.com/KnustAges", color: "hover:text-[#1877F2]" },
-    { name: "Instagram", icon: Instagram, url: "", color: "hover:text-[#E4405F]" },
+    { name: "Instagram", icon: Instagram, url: "https://www.instagram.com/ages_knust1/", color: "hover:text-[#E4405F]" },
     { name: "Twitter", icon: Twitter, url: "https://x.com/ages_knust?s=21", color: "hover:text-[#1DA1F2]" },
     { name: "Telegram", icon: Send, url: "", color: "hover:text-[#0088cc]" },
   ];
