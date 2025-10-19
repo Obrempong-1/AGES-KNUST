@@ -10,8 +10,8 @@ interface Announcement {
   id: string;
   title: string;
   body: string;
-  imageUrl: string;
-  mediaType?: 'image' | 'video'; 
+  mediaUrl: string; 
+  mediaType?: 'image' | 'video';
   published: boolean;
   createdAt: any;
 }
@@ -94,7 +94,7 @@ const Announcements = () => {
           <MegaphoneOff className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-xl font-semibold">No Announcements Yet</h3>
           <p className="mt-2 text-muted-foreground">
-            It's all quiet on the announcement front for now. Please check back later for updates.
+            It's all quiet on the announcement front for now. Please check back later for updates!
           </p>
         </div>
       ) : (
@@ -114,7 +114,7 @@ const Announcements = () => {
                           <div className="sm:w-1/2 aspect-video sm:aspect-[4/3] bg-black">
                           {currentAnnouncement.mediaType === 'video' ? (
                             <video
-                              src={currentAnnouncement.imageUrl}
+                              src={currentAnnouncement.mediaUrl}
                               autoPlay
                               loop
                               muted
@@ -123,7 +123,7 @@ const Announcements = () => {
                             />
                           ) : (
                             <img 
-                                src={currentAnnouncement.imageUrl} 
+                                src={currentAnnouncement.mediaUrl} 
                                 alt={currentAnnouncement.title} 
                                 className="object-cover w-full h-full"
                                 loading="lazy"
