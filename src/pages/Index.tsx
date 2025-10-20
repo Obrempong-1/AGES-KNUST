@@ -45,6 +45,16 @@ interface Personality {
     photo_url?: string; 
 }
 
+interface Announcement {
+    id: string;
+    title: string;
+    body: string;
+    mediaUrl: string;
+    mediaType?: 'image' | 'video';
+    published: boolean;
+    createdAt: any;
+  }
+
 const PersonalityCardSkeleton = () => (
     <Card className="max-w-sm mx-auto mb-8 overflow-hidden shadow-lg rounded-lg">
       <Skeleton className="w-full h-80" />
@@ -65,99 +75,125 @@ const Index = () => {
   const [newsLoading, setNewsLoading] = useState(true);
   const [personality, setPersonality] = useState<Personality | null>(null);
   const [personalityLoading, setPersonalityLoading] = useState(true);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-        setBlogsLoading(true);
-      try {
-        const itemsCollectionRef = collection(db, "blogs");
-        const q = query(
-          itemsCollectionRef,
-          where("published", "==", true),
-          orderBy("createdAt", "desc"),
-          limit(4)
-        );
-        const querySnapshot = await getDocs(q);
-        const blogData = querySnapshot.docs.reduce((acc, doc) => {
-          const data = doc.data();
-          if (data && data.createdAt) { // Ensure createdAt exists
-            acc.push({
-              id: doc.id,
-              title: data.title,
-              date: data.createdAt.toDate().toISOString(),
-              image: data.imageUrl, // Corrected field name
-              short_description: data.shortDescription,
-              author: data.author,
-              link: `/blog/${doc.id}`,
-            });
-          }
-          return acc;
-        }, []);
-        setBlogPosts(blogData);
-      } catch (error) {
-        console.error("Error fetching blogs:", error);
-      } finally {
-        setBlogsLoading(false);
-      }
-    };
-
-    const fetchNewsEvents = async () => {
-        setNewsLoading(true);
-      try {
-        const itemsCollectionRef = collection(db, "news_events");
-        const q = query(
-          itemsCollectionRef,
-          where("published", "==", true),
-          orderBy("createdAt", "desc"),
-          limit(3)
-        );
-        const querySnapshot = await getDocs(q);
-        const newsData = querySnapshot.docs.reduce((acc, doc) => {
-          const data = doc.data();
-          if (data && data.createdAt) { 
-            acc.push({
-              id: doc.id,
-              title: data.title,
-              date: data.createdAt.toDate().toISOString(),
-              image: data.imageUrl, 
-              description: data.shortDescription,
-              link: `/news-events#${doc.id}`,
-            });
-          }
-          return acc;
-        }, []);
-        setNewsEvents(newsData);
-      } catch (error) {
-        console.error("Error fetching news and events:", error);
-      } finally {
-        setNewsLoading(false);
-      }
-      };
-
-      const fetchPersonality = async () => {
-        setPersonalityLoading(true);
-        try {
-            const personalityCollectionRef = collection(db, "personality_of_week");
+    const fetchData = async () => {
+        const fetchBlogs = async () => {
+            setBlogsLoading(true);
+          try {
+            const itemsCollectionRef = collection(db, "blogs");
             const q = query(
-            personalityCollectionRef,
-            where("is_active", "==", true),
-            limit(1)
+              itemsCollectionRef,
+              where("published", "==", true),
+              orderBy("createdAt", "desc"),
+              limit(4)
             );
             const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-            const personalityData = querySnapshot.docs[0].data() as Personality;
-            setPersonality(personalityData);
+            const blogData = querySnapshot.docs.reduce((acc, doc) => {
+              const data = doc.data();
+              if (data && data.createdAt) { // Ensure createdAt exists
+                acc.push({
+                  id: doc.id,
+                  title: data.title,
+                  date: data.createdAt.toDate().toISOString(),
+                  image: data.imageUrl, // Corrected field name
+                  short_description: data.shortDescription,
+                  author: data.author,
+                  link: `/blog/${doc.id}`,
+                });
+              }
+              return acc;
+            }, []);
+            setBlogPosts(blogData);
+          } catch (error) {
+            console.error("Error fetching blogs:", error);
+          } finally {
+            setBlogsLoading(false);
+          }
+        };
+    
+        const fetchNewsEvents = async () => {
+            setNewsLoading(true);
+          try {
+            const itemsCollectionRef = collection(db, "news_events");
+            const q = query(
+              itemsCollectionRef,
+              where("published", "==", true),
+              orderBy("createdAt", "desc"),
+              limit(3)
+            );
+            const querySnapshot = await getDocs(q);
+            const newsData = querySnapshot.docs.reduce((acc, doc) => {
+              const data = doc.data();
+              if (data && data.createdAt) { 
+                acc.push({
+                  id: doc.id,
+                  title: data.title,
+                  date: data.createdAt.toDate().toISOString(),
+                  image: data.imageUrl, 
+                  description: data.shortDescription,
+                  link: `/news-events#${doc.id}`,
+                });
+              }
+              return acc;
+            }, []);
+            setNewsEvents(newsData);
+          } catch (error) {
+            console.error("Error fetching news and events:", error);
+          } finally {
+            setNewsLoading(false);
+          }
+          };
+    
+          const fetchPersonality = async () => {
+            setPersonalityLoading(true);
+            try {
+                const personalityCollectionRef = collection(db, "personality_of_week");
+                const q = query(
+                personalityCollectionRef,
+                where("is_active", "==", true),
+                limit(1)
+                );
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                const personalityData = querySnapshot.docs[0].data() as Personality;
+                setPersonality(personalityData);
+                }
+            } catch (error) {
+                console.error("Error fetching personality of the week:", error);
+            } finally {
+                setPersonalityLoading(false);
             }
-        } catch (error) {
-            console.error("Error fetching personality of the week:", error);
-        } finally {
-            setPersonalityLoading(false);
-        }
-      };
+          };
 
-    fetchBlogs();
-    fetchNewsEvents();
-    fetchPersonality();
+          const fetchAnnouncements = async () => {
+            setAnnouncementsLoading(true);
+            try {
+              const q = query(
+                collection(db, 'announcements'),
+                where('published', '==', true),
+                orderBy('createdAt', 'desc'),
+                limit(5)
+              );
+              const querySnapshot = await getDocs(q);
+              const announcementsData = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+              })) as Announcement[];
+              setAnnouncements(announcementsData);
+            } catch (error) {
+              console.error('Error fetching announcements:', error);
+            } finally {
+              setAnnouncementsLoading(false);
+            }
+          };
+
+          await Promise.all([fetchBlogs(), fetchNewsEvents(), fetchPersonality(), fetchAnnouncements()]);
+    }
+
+    fetchData();
   }, []);
 
   const getPersonalityImageUrls = () => {
@@ -305,7 +341,7 @@ const Index = () => {
         <CarouselNext className="hidden md:flex absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white" />
       </Carousel>
 
-      <Announcements />
+      <Announcements announcements={announcements} loading={announcementsLoading} />
 
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">

@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+
+import { useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, MegaphoneOff } from 'lucide-react';
@@ -38,36 +37,9 @@ const AnnouncementSkeleton = () => (
 );
 
 
-const Announcements = () => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+const Announcements = ({ announcements, loading }: { announcements: Announcement[], loading: boolean }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const q = query(
-          collection(db, 'announcements'),
-          where('published', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        );
-        const querySnapshot = await getDocs(q);
-        const announcementsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Announcement[];
-        setAnnouncements(announcementsData);
-      } catch (error) {
-        console.error('Error fetching announcements:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnnouncements();
-  }, []);
 
   const nextAnnouncement = () => {
     setDirection(1);
@@ -148,7 +120,6 @@ const Announcements = () => {
                                 src={currentAnnouncement.mediaUrl} 
                                 alt={currentAnnouncement.title} 
                                 className="object-contain w-full h-full"
-                                loading="lazy"
                             />
                           )}
                           </div>
