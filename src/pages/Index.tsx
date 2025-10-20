@@ -135,7 +135,7 @@ const PersonalityCardSkeleton = () => (
 );
 
 const Index = () => {
-  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
   const isMobile = useIsMobile();
 
   
@@ -177,13 +177,13 @@ const Index = () => {
 
       <Carousel
         plugins={[plugin.current]}
-        className="w-full is-touch-action-pan-y"
-        opts={{ align: "start", loop: true }}
+        className="w-full"
+        opts={{ align: "center", loop: true }}
       >
-        <CarouselContent style={{ willChange: 'transform' }}>
+        <CarouselContent>
           {heroSlides.map((slide, index) => (
-            <CarouselItem key={index} className="relative h-screen flex items-center justify-center overflow-hidden">
-                {/* Performance Fix: Use img tag for better hardware acceleration */}
+            <CarouselItem key={index} className="relative h-screen flex items-center justify-center overflow-hidden basis-full">
+                
                 <img 
                     src={slide.image} 
                     alt="" 
