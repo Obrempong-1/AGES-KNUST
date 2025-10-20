@@ -5,16 +5,38 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, MegaphoneOff } from 'lucide-react';
 import AnimatedHeading from './AnimatedHeading';
+import { Skeleton } from './ui/skeleton';
 
 interface Announcement {
   id: string;
   title: string;
   body: string;
-  mediaUrl: string; 
+  mediaUrl: string;
   mediaType?: 'image' | 'video';
   published: boolean;
   createdAt: any;
 }
+
+const AnnouncementSkeleton = () => (
+    <div className="relative w-full max-w-4xl mx-auto my-12">
+        <AnimatedHeading>Announcements</AnimatedHeading>
+        <Card className="overflow-hidden shadow-lg rounded-2xl mt-8">
+            <CardContent className="p-0">
+                <div className="flex flex-col sm:flex-row">
+                    <div className="sm:w-1/2 aspect-video sm:aspect-[4/3] bg-muted/30">
+                        <Skeleton className="w-full h-full" />
+                    </div>
+                    <div className="p-8 sm:w-1/2 flex flex-col justify-center">
+                        <Skeleton className="h-8 w-3/4 mb-4" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    </div>
+);
+
 
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -80,7 +102,7 @@ const Announcements = () => {
   };
 
   if (loading) {
-    return null; 
+    return <AnnouncementSkeleton />; 
   }
 
   const currentAnnouncement = announcements[currentIndex];

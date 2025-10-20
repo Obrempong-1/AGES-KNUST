@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { NewsCardSkeleton } from "@/components/NewsCard";
 
 interface NewsEvent {
   id: string;
@@ -17,7 +17,7 @@ interface NewsEvent {
   content: string;
   imageUrl: string;
   published: boolean;
-  createdAt: any; // Firestore timestamp
+  createdAt: any; 
   registrationLink?: string;
 }
 
@@ -74,54 +74,62 @@ const NewsEvents = () => {
         
         <section className="py-16">
           <div className="container mx-auto px-4">
-            {loading && <p>Loading...</p>}
-            {error && <p className="text-red-500">{error}</p>}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {items.map((item, index) => (
-                <Link to={`/news-event/${item.id}`} key={item.id}>
-                <Card 
-                  className="overflow-hidden group hover:shadow-2xl transition-all duration-300 animate-fade-in h-full flex flex-col"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="relative overflow-hidden aspect-video">
-                    <img
-                      src={item.imageUrl || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop"}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2"
-                    />
-                    <div className="absolute top-4 right-4">
-                      <Badge className={item.category === 'event' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}>
-                        {item.category}
-                      </Badge>
+            {loading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <NewsCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : error ? (
+              <p className="text-red-500 text-center py-8">{error}</p>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {items.map((item, index) => (
+                  <Link to={`/news-event/${item.id}`} key={item.id}>
+                  <Card 
+                    className="overflow-hidden group hover:shadow-2xl transition-all duration-300 animate-fade-in h-full flex flex-col"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="relative overflow-hidden aspect-video">
+                      <img
+                        src={item.imageUrl || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop"}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2"
+                      />
+                      <div className="absolute top-4 right-4">
+                        <Badge className={item.category === 'event' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}>
+                          {item.category}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                      {item.title}
-                    </h3>
                     
-                    <p className="text-muted-foreground mb-4 line-clamp-3 flex-grow">
-                      {item.content}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(item.createdAt?.toDate()).toLocaleDateString()}</span>
-                      </div>
+                    <div className="p-6 flex flex-col flex-grow">
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
                       
-                      <div
-                        className="text-primary hover:underline font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all"
-                      >
-                        Read More <ArrowRight className="h-4 w-4" />
+                      <p className="text-muted-foreground mb-4 line-clamp-3 flex-grow">
+                        {item.content}
+                      </p>
+
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(item.createdAt?.toDate()).toLocaleDateString()}</span>
+                        </div>
+                        
+                        <div
+                          className="text-primary hover:underline font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all"
+                        >
+                          Read More <ArrowRight className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-                </Link>
-              ))}
-            </div>
+                  </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>

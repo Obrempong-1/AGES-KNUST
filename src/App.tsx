@@ -9,18 +9,20 @@ import PageSkeleton from "./components/loaders/PageSkeleton";
 import SplashAnimation from "./components/SplashAnimation";
 import NotificationPrompt from "./components/NotificationPrompt";
 
+// Eager load main pages
+import Index from "./pages/Index";
+import About from "./pages/About";
+import Executives from "./pages/Executives";
+import NewsEvents from "./pages/NewsEvents";
+import Contact from "./pages/Contact";
+import Gallery from "./pages/Gallery";
+import PersonalityOfWeek from "./pages/PersonalityOfWeek";
+import Blogs from "./pages/Blogs";
+
 const queryClient = new QueryClient();
 
-// Lazy load all the pages
-const Index = lazy(() => import("./pages/Index"));
-const About = lazy(() => import("./pages/About"));
-const Executives = lazy(() => import("./pages/Executives"));
-const NewsEvents = lazy(() => import("./pages/NewsEvents"));
+// Lazy load other pages
 const NewsEventDetail = lazy(() => import("./pages/NewsEventDetail"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Gallery = lazy(() => import("./pages/Gallery"));
-const PersonalityOfWeek = lazy(() => import("./pages/PersonalityOfWeek"));
-const Blogs = lazy(() => import("./pages/Blogs"));
 const BlogDetail = lazy(() => import("./pages/BlogDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminLogin = lazy(() => import("./pages/admin/Login"));

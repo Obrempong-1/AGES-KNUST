@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Calendar, User, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { BlogCardSkeleton } from "@/components/BlogCard";
 
 interface BlogPost {
   id: string;
@@ -71,61 +72,68 @@ const Blogs = () => {
         
         <section className="py-16">
           <div className="container mx-auto px-4">
-            {loading && <p className="text-center">Loading posts...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
-            {!loading && !error && blogPosts.length === 0 && (
+            {loading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                        <BlogCardSkeleton key={index} />
+                    ))}
+                </div>
+            ) : error ? (
+              <p className="text-center text-red-500">{error}</p>
+            ) : blogPosts.length === 0 ? (
               <p className="text-center text-muted-foreground mt-8">
                 No blog posts have been published yet. Check back later!
               </p>
-            )}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {blogPosts.map((post, index) => (
-                <Card 
-                  key={post.id} 
-                  className="overflow-hidden group hover:shadow-2xl transition-all duration-300 animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="relative overflow-hidden aspect-video">
-                    <img
-                      src={post.imageUrl || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop"} // Fallback image
-                      alt={post.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2"
-                    />
-                  </div>
-                  
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                      {post.title}
-                    </h3>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {blogPosts.map((post, index) => (
+                  <Card 
+                    key={post.id} 
+                    className="overflow-hidden group hover:shadow-2xl transition-all duration-300 animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="relative overflow-hidden aspect-video">
+                      <img
+                        src={post.imageUrl || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop"} // Fallback image
+                        alt={post.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2"
+                      />
+                    </div>
                     
-                    <p className="text-muted-foreground mb-4 line-clamp-3">
-                      {post.shortDescription}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>{post.author}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(post.createdAt?.toDate()).toLocaleDateString()}</span>
-                      </div>
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
                       
-                      <Link
-                        to={`/blog/${post.id}`}
-                        className="text-primary hover:underline font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all"
-                      >
-                        Read More <ArrowRight className="h-4 w-4" />
-                      </Link>
+                      <p className="text-muted-foreground mb-4 line-clamp-3">
+                        {post.shortDescription}
+                      </p>
+
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>{post.author}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(post.createdAt?.toDate()).toLocaleDateString()}</span>
+                        </div>
+                        
+                        <Link
+                          to={`/blog/${post.id}`}
+                          className="text-primary hover:underline font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all"
+                        >
+                          Read More <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
