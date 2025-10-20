@@ -13,7 +13,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
 import heroSlide2 from "@/assets/hero-slide-2.jpg";
 import heroSlide3 from "@/assets/hero-slide-3.jpg";
@@ -21,14 +21,7 @@ import heroSlide4 from "@/assets/hero-slide-4.jpg";
 import survey from "@/assets/survey.jpg";
 import BlogCard, { BlogCardSkeleton } from "@/components/BlogCard";
 import NewsCard, { NewsCardSkeleton } from "@/components/NewsCard";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  limit,
-} from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import Announcements from "@/components/Announcements";
 import AnimatedHeading from "@/components/AnimatedHeading";
@@ -36,167 +29,124 @@ import ScrollZoom from "@/components/ScrollZoom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 
 interface Personality {
-    id: string;
-    name: string;
-    level: string;
-    photo_urls?: string[];
-    photo_url?: string; 
+  id: string;
+  name: string;
+  level: string;
+  photo_urls?: string[];
+  photo_url?: string;
 }
 
 interface Announcement {
-    id: string;
-    title: string;
-    body: string;
-    mediaUrl: string;
-    mediaType?: 'image' | 'video';
-    published: boolean;
-    createdAt: any;
-  }
+  id: string;
+  title: string;
+  body: string;
+  mediaUrl: string;
+  mediaType?: 'image' | 'video';
+  published: boolean;
+  createdAt: any;
+}
+
+
+const fetchAnnouncements = async (): Promise<Announcement[]> => {
+    const q = query(
+      collection(db, 'announcements'),
+      where('published', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Announcement[];
+};
+
+
+const fetchBlogs = async (): Promise<any[]> => {
+    const itemsCollectionRef = collection(db, "blogs");
+    const q = query(
+      itemsCollectionRef,
+      where("published", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(4)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: data.title,
+        date: data.createdAt.toDate().toISOString(),
+        image: data.imageUrl,
+        short_description: data.shortDescription,
+        author: data.author,
+        link: `/blog/${doc.id}`,
+      };
+    });
+};
+
+
+const fetchNewsEvents = async (): Promise<any[]> => {
+    const itemsCollectionRef = collection(db, "news_events");
+    const q = query(
+      itemsCollectionRef,
+      where("published", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(3)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: data.title,
+        date: data.createdAt.toDate().toISOString(),
+        image: data.imageUrl,
+        description: data.shortDescription,
+        link: `/news-events#${doc.id}`,
+      };
+    });
+};
+
+
+const fetchPersonality = async (): Promise<Personality | null> => {
+    const personalityCollectionRef = collection(db, "personality_of_week");
+    const q = query(
+      personalityCollectionRef,
+      where("is_active", "==", true),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data() as Personality;
+    }
+    return null;
+};
+
 
 const PersonalityCardSkeleton = () => (
-    <Card className="max-w-sm mx-auto mb-8 overflow-hidden shadow-lg rounded-lg">
-      <Skeleton className="w-full h-80" />
-      <div className="p-6">
-        <Skeleton className="h-8 w-3/4 mb-2 mx-auto" />
-        <Skeleton className="h-4 w-1/2 mx-auto" />
-      </div>
-    </Card>
-  );
+  <Card className="max-w-sm mx-auto mb-8 overflow-hidden shadow-lg rounded-lg">
+    <Skeleton className="w-full h-80" />
+    <div className="p-6">
+      <Skeleton className="h-8 w-3/4 mb-2 mx-auto" />
+      <Skeleton className="h-4 w-1/2 mx-auto" />
+    </div>
+  </Card>
+);
 
 const Index = () => {
-  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
+  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
   const isMobile = useIsMobile();
 
-  const [blogPosts, setBlogPosts] = useState([]);
-  const [blogsLoading, setBlogsLoading] = useState(true);
-  const [newsEvents, setNewsEvents] = useState([]);
-  const [newsLoading, setNewsLoading] = useState(true);
-  const [personality, setPersonality] = useState<Personality | null>(null);
-  const [personalityLoading, setPersonalityLoading] = useState(true);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  
+  const announcementsQuery = useQuery({ queryKey: ['announcements'], queryFn: fetchAnnouncements, staleTime: 1000 * 60 * 5, refetchOnWindowFocus: false });
+  const blogsQuery = useQuery({ queryKey: ['blogs'], queryFn: fetchBlogs, staleTime: 1000 * 60 * 5, refetchOnWindowFocus: false });
+  const newsQuery = useQuery({ queryKey: ['newsEvents'], queryFn: fetchNewsEvents, staleTime: 1000 * 60 * 5, refetchOnWindowFocus: false });
+  const personalityQuery = useQuery({ queryKey: ['personality'], queryFn: fetchPersonality, staleTime: 1000 * 60 * 5, refetchOnWindowFocus: false });
 
-  useEffect(() => {
-    const fetchData = async () => {
-        const fetchBlogs = async () => {
-            setBlogsLoading(true);
-          try {
-            const itemsCollectionRef = collection(db, "blogs");
-            const q = query(
-              itemsCollectionRef,
-              where("published", "==", true),
-              orderBy("createdAt", "desc"),
-              limit(4)
-            );
-            const querySnapshot = await getDocs(q);
-            const blogData = querySnapshot.docs.reduce((acc, doc) => {
-              const data = doc.data();
-              if (data && data.createdAt) { // Ensure createdAt exists
-                acc.push({
-                  id: doc.id,
-                  title: data.title,
-                  date: data.createdAt.toDate().toISOString(),
-                  image: data.imageUrl, // Corrected field name
-                  short_description: data.shortDescription,
-                  author: data.author,
-                  link: `/blog/${doc.id}`,
-                });
-              }
-              return acc;
-            }, []);
-            setBlogPosts(blogData);
-          } catch (error) {
-            console.error("Error fetching blogs:", error);
-          } finally {
-            setBlogsLoading(false);
-          }
-        };
-    
-        const fetchNewsEvents = async () => {
-            setNewsLoading(true);
-          try {
-            const itemsCollectionRef = collection(db, "news_events");
-            const q = query(
-              itemsCollectionRef,
-              where("published", "==", true),
-              orderBy("createdAt", "desc"),
-              limit(3)
-            );
-            const querySnapshot = await getDocs(q);
-            const newsData = querySnapshot.docs.reduce((acc, doc) => {
-              const data = doc.data();
-              if (data && data.createdAt) { 
-                acc.push({
-                  id: doc.id,
-                  title: data.title,
-                  date: data.createdAt.toDate().toISOString(),
-                  image: data.imageUrl, 
-                  description: data.shortDescription,
-                  link: `/news-events#${doc.id}`,
-                });
-              }
-              return acc;
-            }, []);
-            setNewsEvents(newsData);
-          } catch (error) {
-            console.error("Error fetching news and events:", error);
-          } finally {
-            setNewsLoading(false);
-          }
-          };
-    
-          const fetchPersonality = async () => {
-            setPersonalityLoading(true);
-            try {
-                const personalityCollectionRef = collection(db, "personality_of_week");
-                const q = query(
-                personalityCollectionRef,
-                where("is_active", "==", true),
-                limit(1)
-                );
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                const personalityData = querySnapshot.docs[0].data() as Personality;
-                setPersonality(personalityData);
-                }
-            } catch (error) {
-                console.error("Error fetching personality of the week:", error);
-            } finally {
-                setPersonalityLoading(false);
-            }
-          };
-
-          const fetchAnnouncements = async () => {
-            setAnnouncementsLoading(true);
-            try {
-              const q = query(
-                collection(db, 'announcements'),
-                where('published', '==', true),
-                orderBy('createdAt', 'desc'),
-                limit(5)
-              );
-              const querySnapshot = await getDocs(q);
-              const announcementsData = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-              })) as Announcement[];
-              setAnnouncements(announcementsData);
-            } catch (error) {
-              console.error('Error fetching announcements:', error);
-            } finally {
-              setAnnouncementsLoading(false);
-            }
-          };
-
-          await Promise.all([fetchBlogs(), fetchNewsEvents(), fetchPersonality(), fetchAnnouncements()]);
-    }
-
-    fetchData();
-  }, []);
 
   const getPersonalityImageUrls = () => {
+    const personality = personalityQuery.data;
     if (personality?.photo_urls && personality.photo_urls.length > 0) {
       return personality.photo_urls;
     }
@@ -209,30 +159,10 @@ const Index = () => {
   const personalityImageUrls = getPersonalityImageUrls();
 
   const heroSlides = [
-    {
-      image: heroBg,
-      title: "WELCOME TO ASSOCIATION OF GEOMATIC ENGINEERING STUDENTS",
-      subtitle:
-        "Mapping the future with precision. Excellence in surveying, GIS, remote sensing, and spatial data science.",
-    },
-    {
-      image: heroSlide2,
-      title: "Masters of Measurement & Mapping",
-      subtitle:
-        "From field surveys to advanced GIS - developing the skills to shape our spatial world.",
-    },
-    {
-      image: heroSlide3,
-      title: "Geospatial Innovation & Technology",
-      subtitle:
-        "Leading the way in GPS, LiDAR, photogrammetry, and cutting-edge surveying techniques.",
-    },
-    {
-      image: heroSlide4,
-      title: "Building Tomorrow's Surveyors",
-      subtitle:
-        "Join a community dedicated to precision, accuracy, and professional excellence in geomatic engineering.",
-    },
+    { image: heroBg, title: "WELCOME TO ASSOCIATION OF GEOMATIC ENGINEERING STUDENTS", subtitle: "Mapping the future with precision. Excellence in surveying, GIS, remote sensing, and spatial data science." },
+    { image: heroSlide2, title: "Masters of Measurement & Mapping", subtitle: "From field surveys to advanced GIS - developing the skills to shape our spatial world." },
+    { image: heroSlide3, title: "Geospatial Innovation & Technology", subtitle: "Leading the way in GPS, LiDAR, photogrammetry, and cutting-edge surveying techniques." },
+    { image: heroSlide4, title: "Building Tomorrow's Surveyors", subtitle: "Join a community dedicated to precision, accuracy, and professional excellence in geomatic engineering." },
   ];
   const stats = [
     { icon: Users, label: "Active Members", value: "450+" },
@@ -247,93 +177,93 @@ const Index = () => {
 
       <Carousel
         plugins={[plugin.current]}
-        className="w-full"
-        opts={{
-          align: "start",
-          loop: true,
-        }}
+        className="w-full is-touch-action-pan-y"
+        opts={{ align: "start", loop: true }}
       >
-        <CarouselContent>
+        <CarouselContent style={{ willChange: 'transform' }}>
           {heroSlides.map((slide, index) => (
-            <CarouselItem key={index}>
-              <section
-                className="relative h-screen flex items-center justify-center overflow-hidden"
+            <CarouselItem key={index} className="relative h-screen flex items-center justify-center overflow-hidden">
+                {/* Performance Fix: Use img tag for better hardware acceleration */}
+                <img 
+                    src={slide.image} 
+                    alt="" 
+                    className="absolute top-0 left-0 w-full h-full object-cover -z-10"
+                />
+              <div
+                className="absolute top-0 left-0 w-full h-full -z-10"
                 style={{
-                  backgroundImage: `linear-gradient(rgba(30, 64, 175, 0.7), rgba(251, 146, 60, 0.7)), url(${slide.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  backgroundImage: `linear-gradient(rgba(30, 64, 175, 0.7), rgba(251, 146, 60, 0.7))`
                 }}
-              >
-                <div className="container mx-auto px-4 text-center relative z-10 pt-20">
-                  <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
-                    {slide.title}
-                  </h1>
-                  <p
-                    className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto animate-fade-in"
-                    style={{ animationDelay: "0.2s" }}
+              />
+              <div className="container mx-auto px-4 text-center relative z-10 pt-20">
+                <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
+                  {slide.title}
+                </h1>
+                <p
+                  className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto animate-fade-in"
+                  style={{ animationDelay: "0.2s" }}
+                >
+                  {slide.subtitle}
+                </p>
+                <div
+                  className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in"
+                  style={{ animationDelay: "0.4s" }}
+                >
+                  <Link to="/about">
+                    <Button
+                      size="lg"
+                      className="bg-white text-primary hover:bg-white/90 gap-2"
+                    >
+                      Learn More <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/news-events">
+                    <Button
+                      size="lg"
+                      variant="ghost"
+                      className="text-white/60 hover:text-white"
+                    >
+                      Latest News
+                    </Button>
+                  </Link>
+                </div>
+                <p className="text-sm text-white/80 mt-4">
+                  Discover how AGES shapes future leaders in geomatic
+                  engineering
+                </p>
+                {isMobile && (
+                  <motion.div
+                    className="mt-6 flex flex-col items-center gap-1 text-white/80"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      repeatDelay: 2,
+                      ease: "easeInOut",
+                      times: [0, 0.2, 0.8, 1],
+                    }}
                   >
-                    {slide.subtitle}
-                  </p>
-                  <div
-                    className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in"
-                    style={{ animationDelay: "0.4s" }}
-                  >
-                    <Link to="/about">
-                      <Button
-                        size="lg"
-                        className="bg-white text-primary hover:bg-white/90 gap-2"
-                      >
-                        Learn More <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link to="/news-events">
-                      <Button
-                        size="lg"
-                        variant="ghost"
-                        className="text-white/60 hover:text-white"
-                      >
-                        Latest News
-                      </Button>
-                    </Link>
-                  </div>
-                  <p className="text-sm text-white/80 mt-4">
-                    Discover how AGES shapes future leaders in geomatic
-                    engineering
-                  </p>
-                  {isMobile && (
                     <motion.div
-                      className="mt-6 flex flex-col items-center gap-1 text-white/80"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0, 1, 1, 0] }}
+                      animate={{
+                        x: [-10, 10, -10],
+                      }}
                       transition={{
-                        duration: 4,
+                        duration: 1.5,
                         repeat: Infinity,
-                        repeatDelay: 2,
+                        repeatType: "loop",
                         ease: "easeInOut",
-                        times: [0, 0.2, 0.8, 1],
                       }}
                     >
-                      <motion.div
-                        animate={{
-                          x: [-10, 10, -10],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          repeatType: "loop",
-                          ease: "easeInOut",
-                        }}
-                      >
-                        <Hand className="h-9 w-9 fill-white/50" />
-                      </motion.div>
-                      <span className="text-xs font-semibold tracking-widest">
-                        SWIPE
-                      </span>
+                      <Hand className="h-9 w-9 fill-white/50" />
                     </motion.div>
-                  )}
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent"></div>
-              </section>
+                    <span className="text-xs font-semibold tracking-widest">
+                      SWIPE
+                    </span>
+                  </motion.div>
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent"></div>
             </CarouselItem>
           ))}
         </CarouselContent>
@@ -341,7 +271,7 @@ const Index = () => {
         <CarouselNext className="hidden md:flex absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white" />
       </Carousel>
 
-      <Announcements announcements={announcements} loading={announcementsLoading} />
+      <Announcements announcements={announcementsQuery.data ?? []} loading={announcementsQuery.isLoading} />
 
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -429,12 +359,12 @@ const Index = () => {
 
       <section className="py-20 bg-background text-center">
         <div className="container mx-auto px-4">
-          {(personalityLoading || personality) && (
+          {(personalityQuery.isLoading || personalityQuery.data) && (
             <div className="mb-8">
-              {personalityLoading ? (
+              {personalityQuery.isLoading ? (
                 <PersonalityCardSkeleton />
               ) : (
-                personality && (
+                personalityQuery.data && (
                   <Link to="/personality-of-week">
                     <Card className="max-w-sm mx-auto overflow-hidden shadow-lg rounded-lg card-lift cursor-pointer">
                       <Carousel className="w-full">
@@ -444,7 +374,7 @@ const Index = () => {
                               <CarouselItem key={index}>
                                 <img
                                   src={url}
-                                  alt={`${personality.name} - Photo ${index + 1}`}
+                                  alt={`${personalityQuery.data?.name} - Photo ${index + 1}`}
                                   className="w-full h-80 object-cover"
                                 />
                               </CarouselItem>
@@ -467,8 +397,8 @@ const Index = () => {
                         )}
                       </Carousel>
                       <div className="p-6">
-                        <h3 className="text-2xl font-bold mb-2">{personality.name}</h3>
-                        <p className="text-muted-foreground">{personality.level}</p>
+                        <h3 className="text-2xl font-bold mb-2">{personalityQuery.data.name}</h3>
+                        <p className="text-muted-foreground">{personalityQuery.data.level}</p>
                       </div>
                     </Card>
                   </Link>
@@ -488,7 +418,7 @@ const Index = () => {
         </div>
       </section>
 
-      {(newsLoading || newsEvents.length > 0) && (
+      {(newsQuery.isLoading || (newsQuery.data && newsQuery.data.length > 0)) && (
         <section className="py-20 bg-background relative overflow-hidden">
           <div className="container mx-auto px-4">
             <AnimatedHeading>Latest News & Events</AnimatedHeading>
@@ -496,12 +426,12 @@ const Index = () => {
               Stay up-to-date with the latest happenings in the association.
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-              {newsLoading ? (
+              {newsQuery.isLoading ? (
                 Array.from({ length: 3 }).map((_, index) => (
                     <NewsCardSkeleton key={index} />
                 ))
               ) : (
-                newsEvents.map((item, index) => (
+                newsQuery.data?.map((item, index) => (
                     <ScrollZoom key={index} delay={index * 100}>
                     <NewsCard item={item} />
                     </ScrollZoom>
@@ -523,7 +453,7 @@ const Index = () => {
         </section>
       )}
       
-      {(blogsLoading || blogPosts.length > 0) && (
+      {(blogsQuery.isLoading || (blogsQuery.data && blogsQuery.data.length > 0)) && (
       <section
         className="py-20 bg-background relative overflow-hidden"
       >
@@ -546,12 +476,12 @@ const Index = () => {
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {blogsLoading ? (
+              {blogsQuery.isLoading ? (
                 Array.from({ length: 4 }).map((_, index) => (
                     <BlogCardSkeleton key={index} />
                 ))
               ) : (
-                blogPosts.map((blog, index) => (
+                blogsQuery.data?.map((blog, index) => (
                     <ScrollZoom key={index} delay={index * 100}>
                     <BlogCard post={blog} />
                     </ScrollZoom>
