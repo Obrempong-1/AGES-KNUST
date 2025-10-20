@@ -510,7 +510,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-                <Link to="/about" key={index}>
+                <Link to="/about#hero" key={index}>
                     <Card
                         className="p-6 text-center hover:shadow-lg transition-shadow animate-fade-in h-full"
                         style={{ animationDelay: `${index * 0.1}s` }}

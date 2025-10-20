@@ -1,4 +1,5 @@
-import { useRef, ReactNode } from "react";
+import { useRef, ReactNode, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
@@ -51,6 +52,20 @@ const VisionMissionCard = ({ icon: Icon, title, content, delay = 0 }: { icon: Re
 };
 
 const About = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [location.hash]);
+
   const values = [
     { title: "Excellence", description: "Striving for the highest standards in all our endeavors.", icon: Check },
     { title: "Innovation", description: "Fostering a culture of creativity and forward-thinking.", icon: Lightbulb },
@@ -122,6 +137,7 @@ const About = () => {
       <main className="flex-1">
         
         <motion.section 
+          id="hero"
           className="relative pt-40 pb-24 bg-gradient-to-br from-primary/10 via-background to-secondary/10"
           initial="hidden"
           animate="visible"
