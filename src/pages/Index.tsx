@@ -19,8 +19,8 @@ import heroSlide2 from "@/assets/hero-slide-2.jpg";
 import heroSlide3 from "@/assets/hero-slide-3.jpg";
 import heroSlide4 from "@/assets/hero-slide-4.jpg";
 import survey from "@/assets/survey.jpg";
-import BlogCard from "@/components/BlogCard";
-import NewsCard from "@/components/NewsCard";
+import BlogCard, { BlogCardSkeleton } from "@/components/BlogCard";
+import NewsCard, { NewsCardSkeleton } from "@/components/NewsCard";
 import {
   collection,
   query,
@@ -35,6 +35,7 @@ import AnimatedHeading from "@/components/AnimatedHeading";
 import ScrollZoom from "@/components/ScrollZoom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Personality {
     id: string;
@@ -42,18 +43,32 @@ interface Personality {
     level: string;
     photo_urls?: string[];
     photo_url?: string; 
-  }
+}
+
+const PersonalityCardSkeleton = () => (
+    <Card className="max-w-sm mx-auto mb-8 overflow-hidden shadow-lg rounded-lg">
+      <Skeleton className="w-full h-80" />
+      <div className="p-6">
+        <Skeleton className="h-8 w-3/4 mb-2 mx-auto" />
+        <Skeleton className="h-4 w-1/2 mx-auto" />
+      </div>
+    </Card>
+  );
 
 const Index = () => {
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: false }));
   const isMobile = useIsMobile();
 
   const [blogPosts, setBlogPosts] = useState([]);
+  const [blogsLoading, setBlogsLoading] = useState(true);
   const [newsEvents, setNewsEvents] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(true);
   const [personality, setPersonality] = useState<Personality | null>(null);
+  const [personalityLoading, setPersonalityLoading] = useState(true);
 
   useEffect(() => {
     const fetchBlogs = async () => {
+        setBlogsLoading(true);
       try {
         const itemsCollectionRef = collection(db, "blogs");
         const q = query(
@@ -81,10 +96,13 @@ const Index = () => {
         setBlogPosts(blogData);
       } catch (error) {
         console.error("Error fetching blogs:", error);
+      } finally {
+        setBlogsLoading(false);
       }
     };
 
     const fetchNewsEvents = async () => {
+        setNewsLoading(true);
       try {
         const itemsCollectionRef = collection(db, "news_events");
         const q = query(
@@ -111,10 +129,13 @@ const Index = () => {
         setNewsEvents(newsData);
       } catch (error) {
         console.error("Error fetching news and events:", error);
+      } finally {
+        setNewsLoading(false);
       }
       };
 
       const fetchPersonality = async () => {
+        setPersonalityLoading(true);
         try {
             const personalityCollectionRef = collection(db, "personality_of_week");
             const q = query(
@@ -129,6 +150,8 @@ const Index = () => {
             }
         } catch (error) {
             console.error("Error fetching personality of the week:", error);
+        } finally {
+            setPersonalityLoading(false);
         }
       };
 
@@ -370,44 +393,52 @@ const Index = () => {
 
       <section className="py-20 bg-background text-center">
         <div className="container mx-auto px-4">
-        {personality && (
-            <Link to="/personality-of-week">
-              <Card className="max-w-sm mx-auto mb-8 overflow-hidden shadow-lg rounded-lg card-lift cursor-pointer">
-                <Carousel className="w-full">
-                    <CarouselContent>
-                        {personalityImageUrls.length > 0 ? (
+          {(personalityLoading || personality) && (
+            <div className="mb-8">
+              {personalityLoading ? (
+                <PersonalityCardSkeleton />
+              ) : (
+                personality && (
+                  <Link to="/personality-of-week">
+                    <Card className="max-w-sm mx-auto overflow-hidden shadow-lg rounded-lg card-lift cursor-pointer">
+                      <Carousel className="w-full">
+                        <CarouselContent>
+                          {personalityImageUrls.length > 0 ? (
                             personalityImageUrls.map((url, index) => (
-                                <CarouselItem key={index}>
-                                    <img 
-                                        src={url} 
-                                        alt={`${personality.name} - Photo ${index + 1}`} 
-                                        className="w-full h-80 object-cover" 
-                                    />
-                                </CarouselItem>
-                            ))
-                        ) : (
-                            <CarouselItem>
-                                <img 
-                                    src={survey} 
-                                    alt="Default Survey" 
-                                    className="w-full h-80 object-cover" 
+                              <CarouselItem key={index}>
+                                <img
+                                  src={url}
+                                  alt={`${personality.name} - Photo ${index + 1}`}
+                                  className="w-full h-80 object-cover"
                                 />
+                              </CarouselItem>
+                            ))
+                          ) : (
+                            <CarouselItem>
+                              <img
+                                src={survey}
+                                alt="Default Survey"
+                                className="w-full h-80 object-cover"
+                              />
                             </CarouselItem>
-                        )}
-                    </CarouselContent>
-                    {personalityImageUrls.length > 1 && (
-                        <>
+                          )}
+                        </CarouselContent>
+                        {personalityImageUrls.length > 1 && (
+                          <>
                             <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/75" />
                             <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/75" />
-                        </>
-                    )}
-                </Carousel>
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold mb-2">{personality.name}</h3>
-                  <p className="text-muted-foreground">{personality.level}</p>
-                </div>
-              </Card>
-            </Link>
+                          </>
+                        )}
+                      </Carousel>
+                      <div className="p-6">
+                        <h3 className="text-2xl font-bold mb-2">{personality.name}</h3>
+                        <p className="text-muted-foreground">{personality.level}</p>
+                      </div>
+                    </Card>
+                  </Link>
+                )
+              )}
+            </div>
           )}
           <Link to="/personality-of-week">
             <Button
@@ -421,7 +452,7 @@ const Index = () => {
         </div>
       </section>
 
-      {newsEvents.length > 0 && (
+      {(newsLoading || newsEvents.length > 0) && (
         <section className="py-20 bg-background relative overflow-hidden">
           <div className="container mx-auto px-4">
             <AnimatedHeading>Latest News & Events</AnimatedHeading>
@@ -429,11 +460,17 @@ const Index = () => {
               Stay up-to-date with the latest happenings in the association.
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-              {newsEvents.map((item, index) => (
-                <ScrollZoom key={index} delay={index * 100}>
-                  <NewsCard item={item} />
-                </ScrollZoom>
-              ))}
+              {newsLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                    <NewsCardSkeleton key={index} />
+                ))
+              ) : (
+                newsEvents.map((item, index) => (
+                    <ScrollZoom key={index} delay={index * 100}>
+                    <NewsCard item={item} />
+                    </ScrollZoom>
+                ))
+              )}
             </div>
             <div className="text-center mt-12">
               <Link to="/news-events">
@@ -450,7 +487,7 @@ const Index = () => {
         </section>
       )}
       
-      {blogPosts.length > 0 && (
+      {(blogsLoading || blogPosts.length > 0) && (
       <section
         className="py-20 bg-background relative overflow-hidden"
       >
@@ -473,11 +510,17 @@ const Index = () => {
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {blogPosts.map((blog, index) => (
-                <ScrollZoom key={index} delay={index * 100}>
-                  <BlogCard post={blog} />
-                </ScrollZoom>
-              ))}
+              {blogsLoading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                    <BlogCardSkeleton key={index} />
+                ))
+              ) : (
+                blogPosts.map((blog, index) => (
+                    <ScrollZoom key={index} delay={index * 100}>
+                    <BlogCard post={blog} />
+                    </ScrollZoom>
+                ))
+              )}
             </div>
 
           <div
